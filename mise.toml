@@ -28,6 +28,9 @@ python = "3.14.3"
 
 "aqua:astral-sh/uv" = "0.11.0"
 
+# Applies api/spec/patch.jq to the served Wormholescan spec (moon `root:gen`).
+"aqua:jqlang/jq" = "1.8.2"
+
 # Build / CI CLIs.
 "aqua:moonrepo/moon" = "2.3.5"
 "aqua:cli/cli"       = "2.97.0"

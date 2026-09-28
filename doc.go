@@ -2,6 +2,7 @@
 // (https://api.wormholescan.io), the public explorer API for the Wormhole
 // network.
 //
-// The package is a skeleton: it carries no client yet. The API surface will be
-// added incrementally and may change without notice before v1.
+// This package will hold the hand-written, stable client. It is empty for
+// now; the generated one-method-per-operation client lives in the api
+// subpackage.
 package wormholescan
