@@ -31,6 +31,11 @@ fileGroups:
   releaseConfig:
     - 'release-please-config.json'
     - '.release-please-manifest.json'
+  spec:
+    - 'api/spec/swagger.json'
+    - 'api/spec/patch.jq'
+    - 'api/spec/oapi-codegen.yaml'
+    - 'internal/specgen/**/*.go'
 
 workspace:
   inheritedTasks:
@@ -70,12 +75,49 @@ tasks:
     options:
       cache: false
 
+  # Refresh the committed copy of the served Wormholescan spec. Formatting is
+  # normalized so a diff shows only upstream changes.
+  spec-fetch:
+    script: 'curl -fsSL https://api.wormholescan.io/swagger.json | jq . > api/spec/swagger.json'
+    options:
+      cache: false
+
+  # Regenerate api/api.gen.go: patch the served spec, convert it to OpenAPI 3,
+  # run oapi-codegen. Intermediate files never leave the temp dir.
+  gen:
+    script: |
+      set -euo pipefail
+      tmp="$(mktemp -d)"
+      trap 'rm -rf "$tmp"' EXIT
+      jq -f api/spec/patch.jq api/spec/swagger.json > "$tmp/patched.json"
+      go run ./internal/specgen "$tmp/patched.json" "$tmp/openapi.json"
+      go tool oapi-codegen -config api/spec/oapi-codegen.yaml "$tmp/openapi.json"
+    inputs:
+      - '@group(spec)'
+    outputs:
+      - 'api/api.gen.go'
+    options:
+      cache: false
+
+  # CI gate: the committed api/api.gen.go matches the committed spec + patch.
+  gen-check:
+    script: |
+      set -euo pipefail
+      moon run root:gen --summary minimal
+      git diff --exit-code -- api/api.gen.go
+    inputs:
+      - '@group(spec)'
+      - 'api/api.gen.go'
+    options:
+      cache: false
+
   check:
     deps:
       - 'root:format'
       - 'root:lint'
       - 'root:build'
       - 'root:test'
+      - 'root:gen-check'
     inputs:
       - '@group(goSources)'
       - '@group(lintConfig)'

@@ -1,7 +1,8 @@
 # wormholescan-go
 
-> **Status: skeleton.** The module builds and exposes no client yet. Expect
-> the API surface to change without notice before v1.
+> **Status: early.** The generated `api` package covers every operation in
+> the served spec; the hand-written client is not started. Expect the API
+> surface to change without notice before v1.
 
 `wormholescan-go` is a Go client SDK for the
 [Wormholescan API](https://api.wormholescan.io/swagger/index.html), the
@@ -12,12 +13,48 @@ governor state, guardian heartbeats, and network statistics.
 go get github.com/wormhole-foundation/wormholescan-go
 ```
 
+## Layout
+
+Two layers:
+
+- `api` — thin, generated. One method per operation (`FindVaaById`,
+  `GuardiansHearbeats`, ...), types that mirror the server's JSON, plus
+  `*WithResponse` variants that decode the body. Tracks the spec; no
+  compatibility promise of its own.
+- `wormholescan` (root) — thick, hand-written. Typed domain values,
+  pagination, error handling, retries. This is the supported surface and
+  the one semver applies to. Not written yet.
+
+Use `api` directly when the thick client does not cover an endpoint yet.
+
+## Generated Code
+
+`api/api.gen.go` is produced by [oapi-codegen](https://github.com/oapi-codegen/oapi-codegen)
+from `api/spec/swagger.json`, a committed copy of the document the API
+serves at `https://api.wormholescan.io/swagger.json`. The served document
+has known defects (undeclared path parameters, `[]byte` fields typed as
+integer arrays, wrong response shapes); `api/spec/patch.jq` corrects them
+before generation, one commented rule per defect. `internal/specgen`
+converts the patched Swagger 2.0 document to OpenAPI 3 for oapi-codegen.
+
+```sh
+moon run root:spec-fetch   # refresh api/spec/swagger.json from the server
+moon run root:gen          # patch, convert, regenerate api/api.gen.go
+moon run root:gen-check    # CI gate: committed output is current
+```
+
+`api/decode_test.go` decodes recorded responses in `api/testdata/` through
+the generated types and fails if a key the server sent is lost or changed,
+so a dropped patch rule shows up as a test failure. A weekly workflow
+(`spec-drift.yml`) fetches the served spec and opens an issue when it
+differs from the committed copy.
+
 ## Local Bootstrap
 
 Prerequisites:
 
 - [mise](https://mise.jdx.dev) provisions every pinned tool from `mise.toml` +
-  `mise.lock`: Go, Moon, `golangci-lint`, mockery, GitHub CLI, and Python +
+  `mise.lock`: Go, Moon, `golangci-lint`, mockery, jq, GitHub CLI, and Python +
   uv (used only by the repository settings script). Run `mise install` once.
 
 Tool versions live in `mise.toml`; `mise.lock` records a per-platform download

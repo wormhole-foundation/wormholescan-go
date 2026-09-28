@@ -466,6 +466,11 @@ linters:
       - text: 'comment on exported \S+ \S+ should be of the form ".+"'
         source: '// ?(nolint|TODO)'
         linters: [ revive, staticcheck ]
+      # api.gen.go carries oapi-codegen's own package comment; api/doc.go holds
+      # the one that explains the package (AGENTS.md D4).
+      - path: 'api/doc\.go'
+        text: 'package has more than one godoc'
+        linters: [ godoclint ]
       - path: '_test\.go'
         linters:
           - bodyclose
