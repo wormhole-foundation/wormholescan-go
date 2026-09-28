@@ -81,6 +81,9 @@ tasks:
     script: 'curl -fsSL https://api.wormholescan.io/swagger.json | jq . > api/spec/swagger.json'
     options:
       cache: false
+      # No inputs, so moon ci would treat it as always affected and rewrite the
+      # spec (truncating it while gen-check reads it).
+      runInCI: false
 
   # Regenerate api/api.gen.go: patch the served spec, convert it to OpenAPI 3,
   # run oapi-codegen. Intermediate files never leave the temp dir.
@@ -98,6 +101,8 @@ tasks:
       - 'api/api.gen.go'
     options:
       cache: false
+      # Only gen-check runs in CI; a concurrent gen would race it.
+      runInCI: false
 
   # CI gate: the committed api/api.gen.go matches the committed spec + patch.
   gen-check:
