@@ -101,15 +101,13 @@ tasks:
       - 'api/api.gen.go'
     options:
       cache: false
-      # Only gen-check runs in CI; a concurrent gen would race it.
-      runInCI: false
 
-  # CI gate: the committed api/api.gen.go matches the committed spec + patch.
+  # CI gate: after gen, the committed api/api.gen.go is unchanged, i.e. it
+  # matches the committed spec + patch.
   gen-check:
-    script: |
-      set -euo pipefail
-      moon run root:gen --summary minimal
-      git diff --exit-code -- api/api.gen.go
+    command: 'git diff --exit-code -- api/api.gen.go'
+    deps:
+      - 'root:gen'
     inputs:
       - '@group(spec)'
       - 'api/api.gen.go'
