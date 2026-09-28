@@ -1,0 +1,37 @@
+# TODO(release-app): Release Please runs on GITHUB_TOKEN until a GitHub App can be
+# created in the wormhole-foundation org. Consequences while this is in place:
+# - tags/releases created by GITHUB_TOKEN do not trigger `release.yml` (GitHub
+#   suppresses workflow runs from GITHUB_TOKEN-created events);
+# - GITHUB_TOKEN cannot bypass the protected `v*` tag ruleset, which is why
+#   `rulesets.tags_default` in .github/repository-settings.toml is disabled.
+# Restore when the App exists: create-github-app-token step with
+# vars.<APP>_CLIENT_ID / secrets.<APP>_PRIVATE_KEY, pass its token below, add the
+# App as a bypass actor on the tag ruleset, and re-enable that ruleset.
+
+name: Release Please
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Run Release Please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

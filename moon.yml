@@ -1,0 +1,85 @@
+language: 'go'
+layer: 'library'
+stack: 'backend'
+
+project:
+  title: 'wormholescan-go'
+  description: 'Go client SDK for the Wormholescan API.'
+  owner: 'wormhole-foundation'
+  maintainers:
+    - 'wormhole-foundation'
+
+# Every task runs against `system` binaries that mise (mise.toml + mise.lock) puts
+# on PATH; moon manages no language toolchain itself.
+toolchains:
+  default: 'system'
+
+fileGroups:
+  goSources:
+    - '**/*.go'
+    - 'go.mod'
+    - 'go.sum'
+    # Tool/version pins. Under the `system` toolchain moon does not hash the Go
+    # binary's version, so the mise pins are inputs here too — bumping Go (or any
+    # tool) in mise must invalidate the cacheable build task.
+    - 'mise.toml'
+    - 'mise.lock'
+  lintConfig:
+    - '.golangci.yml'
+    - 'mise.toml'
+    - 'mise.lock'
+  releaseConfig:
+    - 'release-please-config.json'
+    - '.release-please-manifest.json'
+
+workspace:
+  inheritedTasks:
+    include: []
+
+tasks:
+  format:
+    command: 'golangci-lint fmt --config .golangci.yml --diff'
+    inputs:
+      - '@group(goSources)'
+      - '@group(lintConfig)'
+    options:
+      cache: false
+
+  lint:
+    command: 'golangci-lint run --allow-parallel-runners --config .golangci.yml ./... --show-stats=false'
+    inputs:
+      - '@group(goSources)'
+      - '@group(lintConfig)'
+    options:
+      cache: false
+
+  build:
+    command: 'go build ./...'
+    inputs:
+      - '@group(goSources)'
+    options:
+      cache: false
+
+  # Unit tests only: nothing outside integration/ needs Docker or the network
+  # (AGENTS.md T4). Tests that need containers go under integration/ behind the
+  # `integration` build tag, with their own task, when they exist.
+  test:
+    command: 'go test ./...'
+    inputs:
+      - '@group(goSources)'
+    options:
+      cache: false
+
+  check:
+    deps:
+      - 'root:format'
+      - 'root:lint'
+      - 'root:build'
+      - 'root:test'
+    inputs:
+      - '@group(goSources)'
+      - '@group(lintConfig)'
+      - '@group(releaseConfig)'
+    options:
+      cache: false
+      runInCI: true
