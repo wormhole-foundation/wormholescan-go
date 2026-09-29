@@ -1,8 +1,9 @@
 # wormholescan-go
 
-> **Status: early.** The generated `api` package covers every operation in
-> the served spec; the hand-written client is not started. Expect the API
-> surface to change without notice before v1.
+> **Status: early.** VAAs, observations, operations, governor state and the
+> guardian public API are covered by the hand-written client; statistics and
+> token endpoints are reachable through the generated `api` package. Expect
+> the API surface to change without notice before v1.
 
 `wormholescan-go` is a Go client SDK for the
 [Wormholescan API](https://api.wormholescan.io/swagger/index.html), the
@@ -13,19 +14,70 @@ governor state, guardian heartbeats, and network statistics.
 go get github.com/wormhole-foundation/wormholescan-go
 ```
 
+## Usage
+
+```go
+c, err := wormholescan.New() // mainnet; wormholescan.WithBaseURL(wormholescan.TestnetURL) for testnet
+if err != nil {
+    return err
+}
+
+id, _ := wormholescan.ParseVAAID("1/19671a08a9cef6f3a04314ed478fc332a4966f41ad3e6fea76933dede9c6cdfe/755119")
+vaa, err := c.GetVAA(ctx, id, wormholescan.VAAGetOptions{})
+if errors.Is(err, wormholescan.ErrNotFound) {
+    // no such VAA
+}
+
+// One page.
+page, err := c.ListVAAsByChain(ctx, wormholescan.ChainIDEthereum,
+    wormholescan.VAAListOptions{PageOptions: wormholescan.PageOptions{PageSize: 50}})
+
+// Every page, lazily.
+for vaa, err := range c.VAAsByChain(ctx, wormholescan.ChainIDEthereum, wormholescan.VAAListOptions{}) {
+    if err != nil {
+        return err
+    }
+    _ = vaa
+}
+
+// Guardian public API (/v1): works against Wormholescan or a guardian node.
+g, err := guardian.New(wormholescan.WithBaseURL("https://guardian.example.org"))
+heartbeats, err := g.Heartbeats(ctx)
+```
+
+Errors from the server are `*APIError` (status, server code, message,
+request id) and match `ErrNotFound`, `ErrRateLimited`, `ErrBadRequest` with
+`errors.Is`. GET requests are retried on 429 and 5xx with backoff, honouring
+`Retry-After`; `WithRetry` and `WithoutRetry` tune that.
+
 ## Layout
 
 Two layers:
 
+- `wormholescan` (root) — hand-written. Typed domain values (`ChainID`,
+  `VAAID`, `time.Time`, `[]byte`), pagination (`List*` returns one
+  `Page[T]`; the bare plural returns an `iter.Seq2` over every page), error
+  handling, retries. This is the supported surface and the one semver
+  applies to.
+- `wormholescan/guardian` — the `/v1` namespace: the guardiand public API
+  that Wormholescan proxies. Same options; point it at a guardian node's
+  own endpoint with `WithBaseURL`.
 - `api` — thin, generated. One method per operation (`FindVaaById`,
   `GuardiansHearbeats`, ...), types that mirror the server's JSON, plus
   `*WithResponse` variants that decode the body. Tracks the spec; no
-  compatibility promise of its own.
-- `wormholescan` (root) — thick, hand-written. Typed domain values,
-  pagination, error handling, retries. This is the supported surface and
-  the one semver applies to. Not written yet.
+  compatibility promise of its own. `Client.API()` returns one that shares
+  the root client's transport.
 
-Use `api` directly when the thick client does not cover an endpoint yet.
+### Coverage
+
+| Area | Root package | Not covered (use `api`) |
+|---|---|---|
+| VAAs | `GetVAA`, `GetDuplicatedVAAs`, `ListVAAs`/`VAAs`, `ListVAAsByChain`/`VAAsByChain`, `ListVAAsByEmitter`/`VAAsByEmitter` | `parse-vaa` (POST, body undeclared upstream), `get-vaa-counts` |
+| Observations | `ListObservations`/`Observations`, `…ByChain`, `…ByEmitter`, `…ByVAA`, `GetObservation` (server currently answers 404 for every hash encoding), `ListDelegateObservations…`/`DelegateObservations…`, `GetDelegateObservation` | — |
+| Operations | `GetOperation`, `ListOperations`/`Operations`, `SearchOperationsByTxHashes` (server currently answers 405), `GetRelay`, `GetGlobalTransaction` | `list-transactions`, `get-transaction-by-id`, `get-last-transactions` |
+| Governor | `ListGovernorConfigs`/`GovernorConfigs`, `GetGovernorConfig`, `ListGovernorStatuses`/`GovernorStatuses`, `GetGovernorStatus`, `ListGovernorLimits`/`GovernorLimits`, `ListNotionalLimits`/`NotionalLimits`, `ListNotionalLimitsByChain`, `ListNotionalAvailable`/`NotionalAvailable`, `ListNotionalAvailableByChain`, `GetMaxNotionalAvailable`, `EnqueuedVAAs`, `EnqueuedVAAsByChain`, `GovernorVAAs` | — |
+| Guardian `/v1` (`guardian` package) | `Heartbeats`, `CurrentGuardianSet`, `GetSignedVAA`, `GetSignedBatchVAA`, `AvailableNotionalByChain`, `EnqueuedVAAs`, `IsVAAEnqueued`, `GovernorTokenList` | — |
+| Stats, supply, tokens, NTT, address, top-N | — | all |
 
 ## Generated Code
 
