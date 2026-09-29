@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.1](https://github.com/wormhole-foundation/wormholescan-go/compare/v0.1.0...v0.1.1) (2026-09-29)
+
+
+### Bug Fixes
+
+* **observation:** delegate observation sequence is a number ([#12](https://github.com/wormhole-foundation/wormholescan-go/issues/12)) ([a099868](https://github.com/wormhole-foundation/wormholescan-go/commit/a09986803a923d166a05515c779eec3d1b3cc891))
+
 ## 0.1.0 (2026-09-29)
 
 
