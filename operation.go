@@ -200,15 +200,19 @@ func joinChainIDs(ids []ChainID) string {
 
 // vaaIDPath converts a VAA id into generated path parameters.
 func vaaIDPath(id VAAID) (int, string, int, error) {
-	if id.Sequence > uint64(math.MaxInt) {
-		return 0, "", 0, fmt.Errorf(
-			"%sVAA sequence %d exceeds path parameter range",
-			errPrefix,
-			id.Sequence,
-		)
+	seq, err := sequenceParam(id.Sequence)
+	if err != nil {
+		return 0, "", 0, err
 	}
-	seq := int(id.Sequence) //nolint:gosec // sequence checked against MaxInt
 	return int(id.Chain), string(id.Emitter), seq, nil
+}
+
+// sequenceParam converts a VAA sequence into a generated path parameter.
+func sequenceParam(seq uint64) (int, error) {
+	if seq > uint64(math.MaxInt) {
+		return 0, fmt.Errorf("%sVAA sequence %d exceeds path parameter range", errPrefix, seq)
+	}
+	return int(seq), nil
 }
 
 // wrapCall prefixes a generated-client error with the operation id.
