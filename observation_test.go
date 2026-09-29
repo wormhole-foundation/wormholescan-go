@@ -27,7 +27,7 @@ func TestListObservationsBareArray(t *testing.T) {
 		PageOptions: PageOptions{PageSize: fixturePageSize},
 	})
 	require.NoError(t, err)
-	require.Equal(t, 2, len(page.Items))
+	require.Len(t, page.Items, 2)
 	assert.Equal(t, fixturePageSize, page.PageSize)
 	assert.False(t, page.Last())
 	assert.Equal(t, fixtureObservationID, page.Items[0].ID)
@@ -65,18 +65,19 @@ func TestGetDelegateObservationPath(t *testing.T) {
 	require.NoError(t, err)
 
 	var gotPath string
+	var writeErr error
 	c := newTestClientNoRetry(t, func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
-		_, writeErr := w.Write([]byte(`[{
+		_, writeErr = w.Write([]byte(`[{
 			"id":"delegate-1",
 			"emitterChain":1,
 			"emitterAddr":"` + fixtureEmitter + `",
 			"sequence":"755119",
 			"delegatedGuardianAddr":"` + string(fixtureGuardian) + `"
 		}]`))
-		require.NoError(t, writeErr)
 	})
+	require.NoError(t, writeErr)
 
 	got, err := c.GetDelegateObservation(t.Context(), id, fixtureGuardian)
 	require.NoError(t, err)

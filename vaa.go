@@ -67,6 +67,7 @@ type VAAGetOptions struct {
 // VAAListOptions configures VAA list endpoints.
 type VAAListOptions struct {
 	PageOptions
+
 	// TxHash filters find-all-vaas by transaction hash. Other list methods ignore it.
 	TxHash TxHash
 	// ParsedPayload requests decoded payloads on endpoints that support it.
@@ -434,7 +435,7 @@ func uint64FromDec(s string) uint64 {
 }
 
 // payloadFromAPI copies a generated payload map.
-func payloadFromAPI(p *map[string]interface{}) map[string]any {
+func payloadFromAPI(p *map[string]any) map[string]any {
 	if p == nil {
 		return nil
 	}

@@ -41,7 +41,7 @@ func TestGetVAA(t *testing.T) {
 			},
 			assertVAA: func(t *testing.T, got VAA) {
 				assert.Equal(t, id.String(), got.ID.String())
-				assert.Equal(t, fixtureVAARawLen, len(got.Raw))
+				assert.Len(t, got.Raw, fixtureVAARawLen)
 				assert.False(t, got.Timestamp.IsZero())
 				assert.Equal(t, time.UTC, got.Timestamp.Location())
 				assert.Equal(t, Digest("7633abba1546352893c55ede120a8bfb6c8bf6ec8c30f86738b6ba8ff91f4933"), got.Digest)
@@ -101,7 +101,7 @@ func TestVAAsIteratorWalksTwoPages(t *testing.T) {
 	}
 
 	assert.Equal(t, []string{"", "1"}, pages)
-	assert.Equal(t, 3, len(got))
+	assert.Len(t, got, 3)
 	assert.Equal(t, "1/"+fixtureEmitter+"/755601", got[0])
 	assert.Equal(t, "1/"+fixtureEmitter+"/755600", got[1])
 }
@@ -127,7 +127,7 @@ func TestListVAAsByEmitterPathAndQuery(t *testing.T) {
 	assert.Equal(t, "/api/v1/vaas/1/"+fixtureEmitter, gotPath)
 	assert.Equal(t, "2", gotQuery.Get("pageSize"))
 	assert.Equal(t, "ASC", gotQuery.Get("sortOrder"))
-	assert.Equal(t, 2, len(page.Items))
+	assert.Len(t, page.Items, 2)
 }
 
 func writeFixture(t *testing.T, w http.ResponseWriter, name string) {

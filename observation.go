@@ -48,6 +48,7 @@ type Observation struct {
 // ObservationListOptions configures observation list endpoints.
 type ObservationListOptions struct {
 	PageOptions
+
 	// TxHash filters find-observations by transaction hash.
 	// Chain, emitter, VAA, and delegate list methods ignore it.
 	TxHash TxHash
