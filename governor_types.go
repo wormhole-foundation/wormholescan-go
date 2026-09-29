@@ -2,7 +2,6 @@ package wormholescan
 
 import (
 	"math"
-	"strconv"
 	"strings"
 	"time"
 
@@ -436,7 +435,7 @@ func fromAPIGovernorEmitter(src api.GovernorEmitter, chain ChainID) GovernorStat
 func fromAPINestedEnqueuedVAA(src api.GovernorEnqueuedVAA) EnqueuedVAA {
 	return EnqueuedVAA{
 		NotionalValue: uint64FromInt(src.NotionalValue),
-		Sequence:      uint64FromString(deref(src.Sequence)),
+		Sequence:      uint64FromDec(deref(src.Sequence)),
 		TxHash:        TxHash(deref(src.TxHash)),
 		ReleaseTime:   derefTime(src.ReleaseTime),
 	}
@@ -448,7 +447,7 @@ func fromAPIEnqueuedVaa(src api.GovernorEnqueuedVaa) EnqueuedVAA {
 		Chain:         chainIDFromAPI(src.ChainId),
 		Emitter:       EmitterAddress(deref(src.EmitterAddress)),
 		NotionalValue: uint64FromInt(src.NotionalValue),
-		Sequence:      uint64FromInt64(src.Sequence),
+		Sequence:      uint64FromInt64(deref(src.Sequence)),
 		TxHash:        TxHash(deref(src.TxHash)),
 	}
 }
@@ -459,7 +458,7 @@ func fromAPIEnqueuedVaaDetail(src api.GovernorEnqueuedVaaDetail) EnqueuedVAA {
 		Chain:         chainIDFromAPI(src.ChainId),
 		Emitter:       EmitterAddress(deref(src.EmitterAddress)),
 		NotionalValue: uint64FromInt(src.NotionalValue),
-		Sequence:      uint64FromInt64(src.Sequence),
+		Sequence:      uint64FromInt64(deref(src.Sequence)),
 		TxHash:        TxHash(deref(src.TxHash)),
 		ReleaseTime:   unixTime(src.ReleaseTime),
 	}
@@ -500,30 +499,6 @@ func mapSlice[A, B any](in []A, f func(A) B) []B {
 	return out
 }
 
-// chainIDFromAPI converts a generated chain id pointer.
-func chainIDFromAPI(id *api.VaaChainID) ChainID {
-	if id == nil {
-		return 0
-	}
-	return chainIDFromInt64(int64(*id))
-}
-
-// chainIDFromInt converts a generated integer chain id pointer.
-func chainIDFromInt(id *int) ChainID {
-	if id == nil {
-		return 0
-	}
-	return chainIDFromInt64(int64(*id))
-}
-
-// chainIDFromInt64 converts a signed integer to ChainID when it fits in uint16.
-func chainIDFromInt64(n int64) ChainID {
-	if n < 0 || n > math.MaxUint16 {
-		return 0
-	}
-	return ChainID(uint16(n))
-}
-
 // chainIDFromUint64 converts an unsigned integer to ChainID when it fits in uint16.
 func chainIDFromUint64(n uint64) ChainID {
 	if n > math.MaxUint16 {
@@ -538,26 +513,6 @@ func uint64FromInt(p *int) uint64 {
 		return 0
 	}
 	return uint64(*p)
-}
-
-// uint64FromInt64 converts a generated int64 pointer to uint64.
-func uint64FromInt64(p *int64) uint64 {
-	if p == nil || *p < 0 {
-		return 0
-	}
-	return uint64(*p)
-}
-
-// uint64FromString parses a decimal string as uint64. Invalid input yields 0.
-func uint64FromString(s string) uint64 {
-	if s == "" {
-		return 0
-	}
-	n, err := strconv.ParseUint(s, 10, 64)
-	if err != nil {
-		return 0
-	}
-	return n
 }
 
 // unixTime converts a unix-seconds pointer to UTC. Nil or non-positive is zero.
@@ -578,12 +533,6 @@ func lookupAny(obj map[string]any, keys ...string) any {
 	return nil
 }
 
-// anyString returns v as a string, or empty when v is not a string.
-func anyString(v any) string {
-	s, _ := v.(string)
-	return s
-}
-
 // anyUint64 converts a JSON any value to uint64.
 func anyUint64(v any) uint64 {
 	switch n := v.(type) {
@@ -593,7 +542,7 @@ func anyUint64(v any) uint64 {
 		}
 		return uint64(n)
 	case string:
-		return uint64FromString(n)
+		return uint64FromDec(n)
 	default:
 		return 0
 	}

@@ -2,9 +2,6 @@ package wormholescan
 
 import (
 	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -26,7 +23,7 @@ const (
 func TestGetGovernorConfig(t *testing.T) {
 	t.Parallel()
 
-	c := newGovernorClient(t, governorFixtureHandler(t, "governor_config_guardian.json"))
+	c := newTestClientNoRetry(t, writeJSON(readTestdata(t, "governor_config_guardian.json")))
 	got, err := c.GetGovernorConfig(t.Context(), governorTestGuardianPath)
 	require.NoError(t, err)
 
@@ -86,7 +83,7 @@ func TestGetGovernorStatus(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			c := newGovernorClient(t, governorFixtureHandler(t, tt.fixture))
+			c := newTestClientNoRetry(t, writeJSON(readTestdata(t, tt.fixture)))
 			got, err := c.GetGovernorStatus(t.Context(), governorTestGuardianPath)
 			require.NoError(t, err)
 			assert.Equal(t, GuardianAddress(governorTestGuardianHex), got.GuardianAddress)
@@ -98,13 +95,12 @@ func TestGetGovernorStatus(t *testing.T) {
 func TestEnqueuedVAAsByChainNotFound(t *testing.T) {
 	t.Parallel()
 
-	body := readGovernorFixture(t, "governor_enqueued_vaas_chain.json")
-	handler := http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	body := readTestdata(t, "governor_enqueued_vaas_chain.json")
+	c := newTestClientNoRetry(t, func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", contentTypeJSON)
 		w.WriteHeader(http.StatusNotFound)
 		_, _ = w.Write(body)
 	})
-	c := newGovernorClient(t, handler)
 
 	_, err := c.EnqueuedVAAsByChain(t.Context(), ChainIDEthereum)
 	require.ErrorIs(t, err, ErrNotFound)
@@ -117,8 +113,7 @@ func TestGovernorConfigsWalksTwoPages(t *testing.T) {
 	t.Parallel()
 
 	var fetches atomic.Int32
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
+	c := newTestClientNoRetry(t, func(w http.ResponseWriter, r *http.Request) {
 		n := fetches.Add(1)
 		page := r.URL.Query().Get("page")
 		var body string
@@ -130,9 +125,8 @@ func TestGovernorConfigsWalksTwoPages(t *testing.T) {
 		default:
 			body = `{"data":[]}`
 		}
-		_, _ = w.Write([]byte(body))
+		writeJSONBytes(w, []byte(body))
 	})
-	c := newGovernorClient(t, handler)
 
 	var ids []GuardianAddress
 	for item, err := range c.GovernorConfigs(t.Context(), GovernorConfigListOptions{
@@ -148,7 +142,7 @@ func TestGovernorConfigsWalksTwoPages(t *testing.T) {
 func TestGovernorVAAsBareArray(t *testing.T) {
 	t.Parallel()
 
-	c := newGovernorClient(t, governorFixtureHandler(t, "governor_vaas.json"))
+	c := newTestClientNoRetry(t, writeJSON(readTestdata(t, "governor_vaas.json")))
 	got, err := c.GovernorVAAs(t.Context())
 	require.NoError(t, err)
 	require.Len(t, got, governorTestPageSize)
@@ -160,7 +154,7 @@ func TestGovernorVAAsBareArray(t *testing.T) {
 func TestEnqueuedVAAsByChain(t *testing.T) {
 	t.Parallel()
 
-	c := newGovernorClient(t, governorFixtureHandler(t, "governor_enqueued_vaas_chain_1.json"))
+	c := newTestClientNoRetry(t, writeJSON(readTestdata(t, "governor_enqueued_vaas_chain_1.json")))
 	got, err := c.EnqueuedVAAsByChain(t.Context(), ChainIDSolana)
 	require.NoError(t, err)
 	require.Len(t, got, governorTestPageSize)
@@ -168,29 +162,4 @@ func TestEnqueuedVAAsByChain(t *testing.T) {
 	assert.Equal(t, uint64(1384028), got[0].Sequence)
 	assert.Equal(t, uint64(1168266), got[0].NotionalValue)
 	assert.False(t, got[0].ReleaseTime.IsZero())
-}
-
-func newGovernorClient(t *testing.T, handler http.Handler) *Client {
-	t.Helper()
-	srv := httptest.NewServer(handler)
-	t.Cleanup(srv.Close)
-	c, err := New(WithBaseURL(srv.URL), WithoutRetry())
-	require.NoError(t, err)
-	return c
-}
-
-func governorFixtureHandler(t *testing.T, name string) http.Handler {
-	t.Helper()
-	body := readGovernorFixture(t, name)
-	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		_, _ = w.Write(body)
-	})
-}
-
-func readGovernorFixture(t *testing.T, name string) []byte {
-	t.Helper()
-	body, err := os.ReadFile(filepath.Join("testdata", name))
-	require.NoError(t, err)
-	return body
 }
