@@ -82,8 +82,8 @@ type apiErrorDetail struct {
 	RequestID string `json:"request_id"`
 }
 
-// checkResponse returns nil for 2xx responses and an [APIError] otherwise.
-func checkResponse(rsp *http.Response, body []byte) error {
+// CheckResponse returns nil for 2xx responses and an [APIError] otherwise.
+func CheckResponse(rsp *http.Response, body []byte) error {
 	if rsp.StatusCode >= http.StatusOK && rsp.StatusCode < http.StatusMultipleChoices {
 		return nil
 	}
@@ -93,6 +93,11 @@ func checkResponse(rsp *http.Response, body []byte) error {
 	}
 	fillAPIErrorFromBody(apiErr, body)
 	return apiErr
+}
+
+// checkResponse returns nil for 2xx responses and an [APIError] otherwise.
+func checkResponse(rsp *http.Response, body []byte) error {
+	return CheckResponse(rsp, body)
 }
 
 // fillAPIErrorFromBody copies code, message, and request id out of a JSON body.

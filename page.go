@@ -45,9 +45,9 @@ func (p Page[T]) Last() bool {
 	return len(p.Items) < p.PageSize
 }
 
-// paginate walks pages starting at first until [Page.Last], yielding items in
+// Paginate walks pages starting at first until [Page.Last], yielding items in
 // order. The first error from fetch is yielded once and iteration stops.
-func paginate[T any](
+func Paginate[T any](
 	ctx context.Context,
 	first PageOptions,
 	fetch func(context.Context, PageOptions) (Page[T], error),
@@ -77,6 +77,16 @@ func paginate[T any](
 			opts = nextPageOptions(opts, len(page.Items))
 		}
 	}
+}
+
+// paginate walks pages starting at first until [Page.Last], yielding items in
+// order. The first error from fetch is yielded once and iteration stops.
+func paginate[T any](
+	ctx context.Context,
+	first PageOptions,
+	fetch func(context.Context, PageOptions) (Page[T], error),
+) iter.Seq2[T, error] {
+	return Paginate(ctx, first, fetch)
 }
 
 // nextPageOptions advances to the next page, pinning PageSize from n when unset.
