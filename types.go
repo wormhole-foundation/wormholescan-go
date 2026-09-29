@@ -1,12 +1,19 @@
 package wormholescan
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
-const vaaIDNumParts = 3
+const (
+	vaaIDNumParts     = 3
+	emitterByteLength = 32
+	hexPrefix         = "0x"
+	chainIDBitSize    = 16
+	sequenceBitSize   = 64
+)
 
 // ChainID is a Wormhole chain identifier.
 type ChainID uint16
@@ -93,93 +100,164 @@ const (
 )
 
 // String returns the chain name for a known id, or "chain(N)" otherwise.
-func (id ChainID) String() string {
-	if name, ok := chainIDNames()[id]; ok {
-		return name
-	}
-	return "chain(" + strconv.FormatUint(uint64(id), 10) + ")"
-}
-
-// chainIDNames maps known chain ids to their names.
-func chainIDNames() map[ChainID]string {
-	return map[ChainID]string{
-		ChainIDAlgorand:        "Algorand",
-		ChainIDAptos:           "Aptos",
-		ChainIDArbitrum:        "Arbitrum",
-		ChainIDArbitrumSepolia: "ArbitrumSepolia",
-		ChainIDArc:             "Arc",
-		ChainIDAvalanche:       "Avalanche",
-		ChainIDAztec:           "Aztec",
-		ChainIDBOB:             "BOB",
-		ChainIDBSC:             "BSC",
-		ChainIDBase:            "Base",
-		ChainIDBaseSepolia:     "BaseSepolia",
-		ChainIDBerachain:       "Berachain",
-		ChainIDBtc:             "Btc",
-		ChainIDCelestia:        "Celestia",
-		ChainIDCelo:            "Celo",
-		ChainIDCodex:           "Codex",
-		ChainIDConverge:        "Converge",
-		ChainIDCosmoshub:       "Cosmoshub",
-		ChainIDCreditCoin:      "CreditCoin",
-		ChainIDDogecoin:        "Dogecoin",
-		ChainIDDymension:       "Dymension",
-		ChainIDEclipse:         "Eclipse",
-		ChainIDEthereum:        "Ethereum",
-		ChainIDEvmos:           "Evmos",
-		ChainIDFileCoin:        "FileCoin",
-		ChainIDFogo:            "Fogo",
-		ChainIDGnosis:          "Gnosis",
-		ChainIDHolesky:         "Holesky",
-		ChainIDHyperCore:       "HyperCore",
-		ChainIDHyperEVM:        "HyperEVM",
-		ChainIDInjective:       "Injective",
-		ChainIDInk:             "Ink",
-		ChainIDKlaytn:          "Klaytn",
-		ChainIDKujira:          "Kujira",
-		ChainIDLinea:           "Linea",
-		ChainIDMegaETH:         "MegaETH",
-		ChainIDMezo:            "Mezo",
-		ChainIDMoca:            "Moca",
-		ChainIDMonad:           "Monad",
-		ChainIDMonadTestnet:    "MonadTestnet",
-		ChainIDMoonbeam:        "Moonbeam",
-		ChainIDMovement:        "Movement",
-		ChainIDNear:            "Near",
-		ChainIDNeutron:         "Neutron",
-		ChainIDNexus:           "Nexus",
-		ChainIDNoble:           "Noble",
-		ChainIDOptimism:        "Optimism",
-		ChainIDOptimismSepolia: "OptimismSepolia",
-		ChainIDOsmosis:         "Osmosis",
-		ChainIDPlasma:          "Plasma",
-		ChainIDPlume:           "Plume",
-		ChainIDPolygon:         "Polygon",
-		ChainIDPolygonSepolia:  "PolygonSepolia",
-		ChainIDProvenance:      "Provenance",
-		ChainIDPythNet:         "PythNet",
-		ChainIDRootstock:       "Rootstock",
-		ChainIDSeda:            "Seda",
-		ChainIDSei:             "Sei",
-		ChainIDSeiEVM:          "SeiEVM",
-		ChainIDSepolia:         "Sepolia",
-		ChainIDSolana:          "Solana",
-		ChainIDSonic:           "Sonic",
-		ChainIDStacks:          "Stacks",
-		ChainIDStargaze:        "Stargaze",
-		ChainIDStellar:         "Stellar",
-		ChainIDSui:             "Sui",
-		ChainIDTON:             "TON",
-		ChainIDTempo:           "Tempo",
-		ChainIDTerra2:          "Terra2",
-		ChainIDTron:            "Tron",
-		ChainIDUnichain:        "Unichain",
-		ChainIDUnset:           "Unset",
-		ChainIDWorldchain:      "Worldchain",
-		ChainIDWormchain:       "Wormchain",
-		ChainIDXRPL:            "XRPL",
-		ChainIDXRPLEVM:         "XRPLEVM",
-		ChainIDZeroGravity:     "ZeroGravity",
+func (id ChainID) String() string { //nolint:gocyclo,cyclop,funlen // one case per api.VaaChainID member
+	switch id {
+	case ChainIDAlgorand:
+		return "Algorand"
+	case ChainIDAptos:
+		return "Aptos"
+	case ChainIDArbitrum:
+		return "Arbitrum"
+	case ChainIDArbitrumSepolia:
+		return "ArbitrumSepolia"
+	case ChainIDArc:
+		return "Arc"
+	case ChainIDAvalanche:
+		return "Avalanche"
+	case ChainIDAztec:
+		return "Aztec"
+	case ChainIDBOB:
+		return "BOB"
+	case ChainIDBSC:
+		return "BSC"
+	case ChainIDBase:
+		return "Base"
+	case ChainIDBaseSepolia:
+		return "BaseSepolia"
+	case ChainIDBerachain:
+		return "Berachain"
+	case ChainIDBtc:
+		return "Btc"
+	case ChainIDCelestia:
+		return "Celestia"
+	case ChainIDCelo:
+		return "Celo"
+	case ChainIDCodex:
+		return "Codex"
+	case ChainIDConverge:
+		return "Converge"
+	case ChainIDCosmoshub:
+		return "Cosmoshub"
+	case ChainIDCreditCoin:
+		return "CreditCoin"
+	case ChainIDDogecoin:
+		return "Dogecoin"
+	case ChainIDDymension:
+		return "Dymension"
+	case ChainIDEclipse:
+		return "Eclipse"
+	case ChainIDEthereum:
+		return "Ethereum"
+	case ChainIDEvmos:
+		return "Evmos"
+	case ChainIDFileCoin:
+		return "FileCoin"
+	case ChainIDFogo:
+		return "Fogo"
+	case ChainIDGnosis:
+		return "Gnosis"
+	case ChainIDHolesky:
+		return "Holesky"
+	case ChainIDHyperCore:
+		return "HyperCore"
+	case ChainIDHyperEVM:
+		return "HyperEVM"
+	case ChainIDInjective:
+		return "Injective"
+	case ChainIDInk:
+		return "Ink"
+	case ChainIDKlaytn:
+		return "Klaytn"
+	case ChainIDKujira:
+		return "Kujira"
+	case ChainIDLinea:
+		return "Linea"
+	case ChainIDMegaETH:
+		return "MegaETH"
+	case ChainIDMezo:
+		return "Mezo"
+	case ChainIDMoca:
+		return "Moca"
+	case ChainIDMonad:
+		return "Monad"
+	case ChainIDMonadTestnet:
+		return "MonadTestnet"
+	case ChainIDMoonbeam:
+		return "Moonbeam"
+	case ChainIDMovement:
+		return "Movement"
+	case ChainIDNear:
+		return "Near"
+	case ChainIDNeutron:
+		return "Neutron"
+	case ChainIDNexus:
+		return "Nexus"
+	case ChainIDNoble:
+		return "Noble"
+	case ChainIDOptimism:
+		return "Optimism"
+	case ChainIDOptimismSepolia:
+		return "OptimismSepolia"
+	case ChainIDOsmosis:
+		return "Osmosis"
+	case ChainIDPlasma:
+		return "Plasma"
+	case ChainIDPlume:
+		return "Plume"
+	case ChainIDPolygon:
+		return "Polygon"
+	case ChainIDPolygonSepolia:
+		return "PolygonSepolia"
+	case ChainIDProvenance:
+		return "Provenance"
+	case ChainIDPythNet:
+		return "PythNet"
+	case ChainIDRootstock:
+		return "Rootstock"
+	case ChainIDSeda:
+		return "Seda"
+	case ChainIDSei:
+		return "Sei"
+	case ChainIDSeiEVM:
+		return "SeiEVM"
+	case ChainIDSepolia:
+		return "Sepolia"
+	case ChainIDSolana:
+		return "Solana"
+	case ChainIDSonic:
+		return "Sonic"
+	case ChainIDStacks:
+		return "Stacks"
+	case ChainIDStargaze:
+		return "Stargaze"
+	case ChainIDStellar:
+		return "Stellar"
+	case ChainIDSui:
+		return "Sui"
+	case ChainIDTON:
+		return "TON"
+	case ChainIDTempo:
+		return "Tempo"
+	case ChainIDTerra2:
+		return "Terra2"
+	case ChainIDTron:
+		return "Tron"
+	case ChainIDUnichain:
+		return "Unichain"
+	case ChainIDUnset:
+		return "Unset"
+	case ChainIDWorldchain:
+		return "Worldchain"
+	case ChainIDWormchain:
+		return "Wormchain"
+	case ChainIDXRPL:
+		return "XRPL"
+	case ChainIDXRPLEVM:
+		return "XRPLEVM"
+	case ChainIDZeroGravity:
+		return "ZeroGravity"
+	default:
+		return "chain(" + strconv.FormatUint(uint64(id), 10) + ")"
 	}
 }
 
@@ -218,20 +296,49 @@ func ParseVAAID(s string) (VAAID, error) {
 	if len(parts) != vaaIDNumParts {
 		return VAAID{}, fmt.Errorf("%sVAA ID %q: want chain/emitter/sequence", errPrefix, s)
 	}
-	chain, err := strconv.ParseUint(parts[0], 10, 16)
+	chain, err := parseVAAIDUint(parts[0], "chain", chainIDBitSize)
 	if err != nil {
-		return VAAID{}, fmt.Errorf("%sVAA ID chain %q: %w", errPrefix, parts[0], err)
+		return VAAID{}, err
 	}
-	if parts[1] == "" {
-		return VAAID{}, fmt.Errorf("%sVAA ID emitter is empty", errPrefix)
-	}
-	seq, err := strconv.ParseUint(parts[2], 10, 64)
+	emitter, err := parseEmitter(parts[1])
 	if err != nil {
-		return VAAID{}, fmt.Errorf("%sVAA ID sequence %q: %w", errPrefix, parts[2], err)
+		return VAAID{}, err
+	}
+	seq, err := parseVAAIDUint(parts[2], "sequence", sequenceBitSize)
+	if err != nil {
+		return VAAID{}, err
 	}
 	return VAAID{
-		Chain:    ChainID(chain),
-		Emitter:  EmitterAddress(parts[1]),
+		Chain:    ChainID(chain), //nolint:gosec // chainIDBitSize is 16, so chain fits uint16
+		Emitter:  emitter,
 		Sequence: seq,
 	}, nil
+}
+
+// parseVAAIDUint parses a decimal VAA ID part with no leading zeros.
+func parseVAAIDUint(raw, part string, bitSize int) (uint64, error) {
+	if raw == "" || (len(raw) > 1 && raw[0] == '0') {
+		return 0, fmt.Errorf("%sVAA ID %s %q: invalid", errPrefix, part, raw)
+	}
+	n, err := strconv.ParseUint(raw, 10, bitSize)
+	if err != nil {
+		return 0, fmt.Errorf("%sVAA ID %s %q: %w", errPrefix, part, raw, err)
+	}
+	return n, nil
+}
+
+// parseEmitter normalizes and validates a 32-byte hex emitter address.
+func parseEmitter(raw string) (EmitterAddress, error) {
+	s := strings.TrimPrefix(strings.ToLower(raw), hexPrefix)
+	decoded, err := hex.DecodeString(s)
+	if err != nil {
+		return "", fmt.Errorf("%sVAA ID emitter %q: %w", errPrefix, raw, err)
+	}
+	if len(decoded) != emitterByteLength {
+		return "", fmt.Errorf(
+			"%sVAA ID emitter %q: want %d bytes, got %d",
+			errPrefix, raw, emitterByteLength, len(decoded),
+		)
+	}
+	return EmitterAddress(s), nil
 }

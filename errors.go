@@ -1,6 +1,7 @@
 package wormholescan
 
 import (
+	"bytes"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -65,13 +66,19 @@ func (e *APIError) Is(target error) bool {
 	}
 }
 
+// apiErrorBody is the JSON error envelope the API returns on non-2xx responses.
 type apiErrorBody struct {
-	Code    int              `json:"code"`
-	Message string           `json:"message"`
+	// Code is the API error code.
+	Code int `json:"code"`
+	// Message is the API error message.
+	Message string `json:"message"`
+	// Details holds extra fields such as the request id.
 	Details []apiErrorDetail `json:"details"`
 }
 
+// apiErrorDetail is one entry in the API error details array.
 type apiErrorDetail struct {
+	// RequestID is the server-assigned request id.
 	RequestID string `json:"request_id"`
 }
 
@@ -90,9 +97,6 @@ func checkResponse(rsp *http.Response, body []byte) error {
 
 // fillAPIErrorFromBody copies code, message, and request id out of a JSON body.
 func fillAPIErrorFromBody(apiErr *APIError, body []byte) {
-	if !json.Valid(body) {
-		return
-	}
 	var parsed apiErrorBody
 	if err := json.Unmarshal(body, &parsed); err != nil {
 		return
@@ -104,10 +108,10 @@ func fillAPIErrorFromBody(apiErr *APIError, body []byte) {
 	}
 }
 
-// clipBody returns body truncated to maxErrorBodyBytes.
+// clipBody returns a copy of body truncated to maxErrorBodyBytes.
 func clipBody(body []byte) []byte {
-	if len(body) <= maxErrorBodyBytes {
-		return body
+	if len(body) > maxErrorBodyBytes {
+		body = body[:maxErrorBodyBytes]
 	}
-	return body[:maxErrorBodyBytes]
+	return bytes.Clone(body)
 }

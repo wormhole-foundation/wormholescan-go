@@ -2,14 +2,18 @@ package wormholescan
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
+	"math"
 	"math/rand/v2"
+	"net"
 	"net/http"
 	"net/url"
 	"runtime/debug"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/wormhole-foundation/wormholescan-go/api"
@@ -27,14 +31,16 @@ const (
 	defaultRetryAttempts = 3
 	defaultRetryBackoff  = 500 * time.Millisecond
 	maxRetryBackoff      = 10 * time.Second
+	maxRetryAfterSeconds = int(math.MaxInt64 / int64(time.Second))
 	userAgentProduct     = "wormholescan-go"
 	develVersion         = "(devel)"
+	modulePath           = "github.com/wormhole-foundation/wormholescan-go"
 )
 
 // Client is the hand-written Wormholescan API client.
 type Client struct {
+	// api is the generated client sharing this client's transport and headers.
 	api *api.ClientWithResponses
-	cfg config
 }
 
 // config is the resolved client configuration after applying options.
@@ -76,8 +82,7 @@ func New(opts ...Option) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%screate API client: %w", errPrefix, err)
 	}
-	cfg.httpClient = httpClient
-	return &Client{api: apiClient, cfg: cfg}, nil
+	return &Client{api: apiClient}, nil
 }
 
 // WithBaseURL sets the API origin. The value must include a scheme and host.
@@ -150,10 +155,27 @@ func (c *Client) API() *api.ClientWithResponses {
 // "wormholescan-go" when the version is unavailable.
 func defaultUserAgent() string {
 	info, ok := debug.ReadBuildInfo()
-	if !ok || info.Main.Version == "" || info.Main.Version == develVersion {
+	if !ok {
 		return userAgentProduct
 	}
-	return userAgentProduct + "/" + info.Main.Version
+	version := moduleVersion(info)
+	if version == "" || version == develVersion {
+		return userAgentProduct
+	}
+	return userAgentProduct + "/" + version
+}
+
+// moduleVersion returns this module's version from build info.
+func moduleVersion(info *debug.BuildInfo) string {
+	if info.Main.Path == modulePath {
+		return info.Main.Version
+	}
+	for _, dep := range info.Deps {
+		if dep != nil && dep.Path == modulePath {
+			return dep.Version
+		}
+	}
+	return ""
 }
 
 // userAgentEditor returns a request editor that sets User-Agent to ua.
@@ -211,6 +233,9 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return resp, err
 		}
 		delay := t.delay(attempt, resp)
+		if exceedsDeadline(ctx, delay) {
+			return resp, err
+		}
 		drainAndClose(resp)
 		if err := sleep(ctx, delay); err != nil {
 			return nil, err
@@ -224,7 +249,7 @@ func retriable(req *http.Request, resp *http.Response, err error) bool {
 		return false
 	}
 	if err != nil {
-		return req.Context().Err() == nil
+		return req.Context().Err() == nil && transientTransportError(err)
 	}
 	if resp == nil {
 		return false
@@ -235,6 +260,34 @@ func retriable(req *http.Request, resp *http.Response, err error) bool {
 	default:
 		return false
 	}
+}
+
+// transientTransportError reports whether err is a transient network failure.
+func transientTransportError(err error) bool {
+	for err != nil {
+		if errors.Is(err, io.ErrUnexpectedEOF) {
+			return true
+		}
+		if errors.Is(err, syscall.ECONNRESET) ||
+			errors.Is(err, syscall.EPIPE) ||
+			errors.Is(err, syscall.ECONNABORTED) {
+			return true
+		}
+		var urlErr *url.Error
+		if errors.As(err, &urlErr) {
+			err = urlErr.Err
+			continue
+		}
+		var netErr net.Error
+		return errors.As(err, &netErr)
+	}
+	return false
+}
+
+// exceedsDeadline reports whether waiting delay would miss ctx's deadline.
+func exceedsDeadline(ctx context.Context, delay time.Duration) bool {
+	dl, ok := ctx.Deadline()
+	return ok && time.Until(dl) < delay
 }
 
 // delay returns how long to wait before the next attempt.
@@ -267,6 +320,9 @@ func parseRetryAfter(raw string) (time.Duration, bool) {
 	if secs, err := strconv.Atoi(raw); err == nil {
 		if secs < 0 {
 			return 0, true
+		}
+		if secs > maxRetryAfterSeconds {
+			secs = maxRetryAfterSeconds
 		}
 		return time.Duration(secs) * time.Second, true
 	}
@@ -312,6 +368,6 @@ func drainAndClose(resp *http.Response) {
 	if resp == nil || resp.Body == nil {
 		return
 	}
-	_, _ = io.Copy(io.Discard, resp.Body)
+	_, _ = io.CopyN(io.Discard, resp.Body, maxErrorBodyBytes)
 	_ = resp.Body.Close()
 }

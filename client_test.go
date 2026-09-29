@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -75,10 +76,77 @@ func TestRetryHonoursRetryAfter(t *testing.T) {
 
 	c, err := New(WithBaseURL(srv.URL))
 	require.NoError(t, err)
+	start := time.Now()
 	resp, err := doMethod(t.Context(), t, c, http.MethodGet, srv.URL)
 	require.NoError(t, err)
+	assert.GreaterOrEqual(t, time.Since(start), time.Second)
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, int32(2), n.Load())
+}
+
+func TestRetryAfterPastDeadlineReturnsResponse(t *testing.T) {
+	t.Parallel()
+
+	const retryAfterSeconds = 60
+	var n atomic.Int32
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		n.Add(1)
+		w.Header().Set("Retry-After", "60")
+		w.WriteHeader(http.StatusTooManyRequests)
+	}))
+	t.Cleanup(srv.Close)
+
+	c, err := New(WithBaseURL(srv.URL))
+	require.NoError(t, err)
+	ctx, cancel := context.WithTimeout(t.Context(), 50*time.Millisecond)
+	t.Cleanup(cancel)
+	start := time.Now()
+	resp, err := doMethod(ctx, t, c, http.MethodGet, srv.URL)
+	require.NoError(t, err)
+	assert.Equal(t, http.StatusTooManyRequests, resp.StatusCode)
+	assert.Equal(t, int32(1), n.Load())
+	assert.Less(t, time.Since(start), time.Duration(retryAfterSeconds)*time.Second)
+}
+
+func TestParseRetryAfter(t *testing.T) {
+	t.Parallel()
+
+	past := time.Now().Add(-time.Hour).UTC().Format(http.TimeFormat)
+	future := time.Now().Add(5 * time.Second).UTC().Format(http.TimeFormat)
+
+	tests := []struct {
+		name    string
+		raw     string
+		wantOK  bool
+		wantMin time.Duration
+		wantMax time.Duration
+	}{
+		{name: "seconds", raw: "1", wantOK: true, wantMin: time.Second, wantMax: time.Second},
+		{name: "negative", raw: "-1", wantOK: true, wantMin: 0, wantMax: 0},
+		{name: "garbage", raw: "nope", wantOK: false},
+		{name: "empty", raw: "", wantOK: false},
+		{name: "past HTTP-date", raw: past, wantOK: true, wantMin: 0, wantMax: 0},
+		{name: "future HTTP-date", raw: future, wantOK: true, wantMin: time.Nanosecond, wantMax: 5 * time.Second},
+		{
+			name:    "overflow seconds",
+			raw:     "10000000000",
+			wantOK:  true,
+			wantMin: time.Duration(maxRetryAfterSeconds) * time.Second,
+			wantMax: time.Duration(maxRetryAfterSeconds) * time.Second,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, ok := parseRetryAfter(tt.raw)
+			assert.Equal(t, tt.wantOK, ok)
+			if !tt.wantOK {
+				return
+			}
+			assert.GreaterOrEqual(t, got, tt.wantMin)
+			assert.LessOrEqual(t, got, tt.wantMax)
+		})
+	}
 }
 
 func TestPostServiceUnavailableIsNotRetried(t *testing.T) {
@@ -139,6 +207,7 @@ func TestRetryStopsWhenContextCancelled(t *testing.T) {
 	assert.Equal(t, int32(1), n.Load())
 }
 
+// doMethod issues method against rawURL using c's retrying HTTP client.
 func doMethod(
 	ctx context.Context,
 	t *testing.T,
@@ -149,7 +218,7 @@ func doMethod(
 	t.Helper()
 	req, err := http.NewRequestWithContext(ctx, method, rawURL, http.NoBody)
 	require.NoError(t, err)
-	resp, err := c.cfg.httpClient.Do(req)
+	resp, err := httpClientOf(t, c).Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -158,4 +227,14 @@ func doMethod(
 		_ = resp.Body.Close()
 	})
 	return resp, nil
+}
+
+// httpClientOf returns the [*http.Client] wired into c.
+func httpClientOf(t *testing.T, c *Client) *http.Client {
+	t.Helper()
+	inner, ok := c.API().ClientInterface.(*api.Client)
+	require.True(t, ok)
+	hc, ok := inner.Client.(*http.Client)
+	require.True(t, ok)
+	return hc
 }

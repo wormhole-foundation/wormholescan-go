@@ -37,6 +37,34 @@ func TestPaginateWalksTwoPages(t *testing.T) {
 	assert.Equal(t, int32(2), fetches.Load())
 }
 
+func TestPaginatePinsPageSizeFromFirstPage(t *testing.T) {
+	t.Parallel()
+
+	var fetches atomic.Int32
+	fetch := func(_ context.Context, opts PageOptions) (Page[int], error) {
+		n := fetches.Add(1)
+		switch n {
+		case 1:
+			assert.Equal(t, 0, opts.PageSize)
+			return Page[int]{Items: []int{1, 2}, Page: 0, PageSize: opts.PageSize}, nil
+		case 2:
+			assert.Equal(t, 2, opts.PageSize)
+			return Page[int]{Items: []int{3}, Page: 1, PageSize: opts.PageSize}, nil
+		default:
+			return Page[int]{}, errors.New("unexpected extra fetch")
+		}
+	}
+	seq := paginate(t.Context(), PageOptions{}, fetch)
+
+	var got []int
+	for item, err := range seq {
+		require.NoError(t, err)
+		got = append(got, item)
+	}
+	assert.Equal(t, []int{1, 2, 3}, got)
+	assert.Equal(t, int32(2), fetches.Load())
+}
+
 func TestPaginateYieldsFetchErrorOnce(t *testing.T) {
 	t.Parallel()
 

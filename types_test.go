@@ -5,12 +5,15 @@ import (
 	"go/parser"
 	"go/token"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+const testEmitter = "19671a08a9cef6f3a04314ed478fc332a4966f41ad3e6fea76933dede9c6cdfe"
 
 func TestParseVAAIDRoundTrip(t *testing.T) {
 	t.Parallel()
@@ -19,7 +22,7 @@ func TestParseVAAIDRoundTrip(t *testing.T) {
 	id, err := ParseVAAID(raw)
 	require.NoError(t, err)
 	assert.Equal(t, ChainIDSolana, id.Chain)
-	assert.Equal(t, EmitterAddress("19671a08a9cef6f3a04314ed478fc332a4966f41ad3e6fea76933dede9c6cdfe"), id.Emitter)
+	assert.Equal(t, EmitterAddress(testEmitter), id.Emitter)
 	assert.Equal(t, uint64(755119), id.Sequence)
 	assert.Equal(t, raw, id.String())
 }
@@ -33,12 +36,16 @@ func TestParseVAAIDRejects(t *testing.T) {
 		part string
 	}{
 		{name: "empty", raw: "", part: "chain/emitter/sequence"},
-		{name: "two parts", raw: "1/abc", part: "chain/emitter/sequence"},
-		{name: "four parts", raw: "1/abc/2/extra", part: "chain/emitter/sequence"},
-		{name: "non-numeric chain", raw: "x/abc/1", part: "chain"},
-		{name: "chain overflow", raw: "65536/abc/1", part: "chain"},
+		{name: "two parts", raw: "1/" + testEmitter, part: "chain/emitter/sequence"},
+		{name: "four parts", raw: "1/" + testEmitter + "/2/extra", part: "chain/emitter/sequence"},
+		{name: "non-numeric chain", raw: "x/" + testEmitter + "/1", part: "chain"},
+		{name: "chain overflow", raw: "65536/" + testEmitter + "/1", part: "chain"},
+		{name: "chain leading zeros", raw: "01/" + testEmitter + "/1", part: "chain"},
 		{name: "empty emitter", raw: "1//1", part: "emitter"},
-		{name: "non-numeric sequence", raw: "1/abc/x", part: "sequence"},
+		{name: "short emitter", raw: "1/abcd/1", part: "emitter"},
+		{name: "non-hex emitter", raw: "1/zz/1", part: "emitter"},
+		{name: "non-numeric sequence", raw: "1/" + testEmitter + "/x", part: "sequence"},
+		{name: "sequence leading zeros", raw: "1/" + testEmitter + "/007", part: "sequence"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -48,6 +55,16 @@ func TestParseVAAIDRejects(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.part)
 		})
 	}
+}
+
+func TestParseVAAIDNormalizesEmitter(t *testing.T) {
+	t.Parallel()
+
+	raw := "1/0x" + strings.ToUpper(testEmitter) + "/755119"
+	id, err := ParseVAAID(raw)
+	require.NoError(t, err)
+	assert.Equal(t, EmitterAddress(testEmitter), id.Emitter)
+	assert.Equal(t, "1/"+testEmitter+"/755119", id.String())
 }
 
 func TestChainIDString(t *testing.T) {
@@ -86,6 +103,7 @@ func TestDeref(t *testing.T) {
 	assert.Equal(t, time.UTC, got.Location())
 }
 
+// constValues collects typed integer constants from a Go source file.
 func constValues(t *testing.T, path, typeName string) map[string]int64 {
 	t.Helper()
 	fset := token.NewFileSet()

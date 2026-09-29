@@ -32,6 +32,7 @@ type Page[T any] struct {
 	// Page is the 0-based page index that produced Items.
 	Page int
 	// PageSize is the requested page size used to detect the end of the list.
+	// Fetchers must set this to opts.PageSize.
 	PageSize int
 }
 
@@ -73,7 +74,16 @@ func paginate[T any](
 			if page.Last() {
 				return
 			}
-			opts.Page++
+			opts = nextPageOptions(opts, len(page.Items))
 		}
 	}
+}
+
+// nextPageOptions advances to the next page, pinning PageSize from n when unset.
+func nextPageOptions(opts PageOptions, n int) PageOptions {
+	if opts.PageSize == 0 {
+		opts.PageSize = n
+	}
+	opts.Page++
+	return opts
 }
