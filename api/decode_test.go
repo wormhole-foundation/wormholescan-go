@@ -47,6 +47,14 @@ func TestDecodeRecordedResponses(t *testing.T) {
 			),
 		},
 		{
+			name:    "delegate observations",
+			fixture: "api_v1_observations_delegate_51_8192a21f_18242.json",
+			parse: json200(
+				api.ParseFindDelegateObservationsBySequenceResponse,
+				func(r *api.FindDelegateObservationsBySequenceResponse) any { return r.JSON200 },
+			),
+		},
+		{
 			name:    "governor status",
 			fixture: "api_v1_governor_status_pageSize_1.json",
 			parse: json200(

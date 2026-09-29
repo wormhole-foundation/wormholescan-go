@@ -219,7 +219,7 @@ type DelegateObservationsDelegateObservationDoc struct {
 	Nonce                 *int        `json:"nonce,omitempty"`
 	Payload               *[]byte     `json:"payload,omitempty"`
 	SentTimestamp         *string     `json:"sentTimestamp,omitempty"`
-	Sequence              *string     `json:"sequence,omitempty"`
+	Sequence              *int64      `json:"sequence,omitempty"`
 	Signature             *[]byte     `json:"signature,omitempty"`
 	Timestamp             *time.Time  `json:"timestamp,omitempty"`
 	TxHash                *[]byte     `json:"txHash,omitempty"`

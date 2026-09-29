@@ -73,7 +73,7 @@ func TestGetDelegateObservationPath(t *testing.T) {
 			"id":"delegate-1",
 			"emitterChain":1,
 			"emitterAddr":"` + fixtureEmitter + `",
-			"sequence":"755119",
+			"sequence":755119,
 			"delegatedGuardianAddr":"` + string(fixtureGuardian) + `"
 		}]`))
 	})
