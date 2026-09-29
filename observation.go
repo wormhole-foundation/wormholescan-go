@@ -243,6 +243,11 @@ func (c *Client) ObservationsByVAA(
 //
 // hash is the lowercase hex encoding of the observation hash with no 0x prefix,
 // the last segment of [Observation.ID].
+//
+// The live API currently answers 404 for every known hash encoding (hex from
+// Observation.ID, base64 Observation.Hash, URL-encoded raw hash bytes, and the
+// corresponding txHash forms). This method is kept for when upstream fixes
+// find-observations-by-id.
 func (c *Client) GetObservation(
 	ctx context.Context,
 	id VAAID,
