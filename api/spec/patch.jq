@@ -93,6 +93,16 @@ def is_rfc3339_field($def; $name):
       then .value.schema = {"$ref": "#/definitions/response.Error"} else . end
     )
   ))
+
+# 10. /api/v1/global-tx/{chain_id}/{emitter}/{seq} returns
+#     transactions.GlobalTransactionDoc ({id, originTx, destinationTx}),
+#     not transactions.Tx (x-chain activity volume). Evidence: live
+#     GET https://api.wormholescan.io/api/v1/global-tx/2/0000000000000000000000003ee18b2214aff97000d974cf647e7c347e8fa585/691371
+#     returned {"id":"...","originTx":{...},"destinationTx":null}.
+| .paths["/api/v1/global-tx/{chain_id}/{emitter}/{seq}"].get.responses["200"].schema = {
+    "$ref": "#/definitions/transactions.GlobalTransactionDoc"
+  }
+
 # 20. /v1/signed_vaa and /v1/signed_batch_vaa declare vaaBytes as an integer
 #     array; the live server sends a base64 string. Recorded
 #     /v1/signed_vaa/1/19671a08a9cef6f3a04314ed478fc332a4966f41ad3e6fea76933dede9c6cdfe/755119

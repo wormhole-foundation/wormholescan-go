@@ -7938,7 +7938,7 @@ func (r ApplicationActivityResponse) StatusCode() int {
 type FindGlobalTransactionByIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *TransactionsTx
+	JSON200      *TransactionsGlobalTransactionDoc
 	JSON400      *ResponseError
 	JSON500      *ResponseError
 }
@@ -10434,7 +10434,7 @@ func ParseFindGlobalTransactionByIdResponse(rsp *http.Response) (*FindGlobalTran
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest TransactionsTx
+		var dest TransactionsGlobalTransactionDoc
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
