@@ -522,7 +522,7 @@ func delegateObservationFromAPI(doc api.DelegateObservationsDelegateObservationD
 		ID:                    deref(doc.Id),
 		EmitterChain:          chainFromAPI(deref(doc.EmitterChain)),
 		EmitterAddress:        EmitterAddress(deref(doc.EmitterAddr)),
-		Sequence:              uint64FromDec(deref(doc.Sequence)),
+		Sequence:              uint64FromInt64(deref(doc.Sequence)),
 		Hash:                  deref(doc.Hash),
 		TxHash:                deref(doc.TxHash),
 		DelegatedGuardianAddr: GuardianAddress(deref(doc.DelegatedGuardianAddr)),

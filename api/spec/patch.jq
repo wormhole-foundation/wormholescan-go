@@ -64,11 +64,13 @@ def is_rfc3339_field($def; $name):
 | .consumes = ["application/json"]
 
 # 7. Fields the spec omits or mistypes (checked against live responses).
-#    vaa.VaaDoc has no `sequence`; observations.ObservationDoc renders it as a
-#    string but the server sends a number. (operations and governor responses
+#    vaa.VaaDoc has no `sequence`; observations.ObservationDoc and
+#    delegate_observations.DelegateObservationDoc render it as a string but
+#    the server sends a number. (operations and governor responses
 #    really do send it as a string.)
 | .definitions["vaa.VaaDoc"].properties.sequence = {type: "integer", format: "int64"}
 | .definitions["observations.ObservationDoc"].properties.sequence = {type: "integer", format: "int64"}
+| .definitions["delegate_observations.DelegateObservationDoc"].properties.sequence = {type: "integer", format: "int64"}
 
 # 8. /api/v1/vaas/{chain_id}/{emitter}/{seq} returns {"data": VaaDoc}, not an
 #    array envelope.
