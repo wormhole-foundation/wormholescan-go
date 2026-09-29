@@ -142,3 +142,42 @@ def is_rfc3339_field($def; $name):
 #     bytes (JSON base64). Wormholescan currently omits it (recorded
 #     /v1/heartbeats); keep the field so a guardian --publicWeb response maps.
 | .definitions["heartbeats.RawHeartbeat"].properties.p2pNodeId = {type: "string", format: "byte"}
+
+# 40. /api/v1/vaas/{chain_id}/{emitter}/{seq}/duplicated returns
+#     {"data":[DuplicateVaaDoc]} whose sequence is a string and which omits
+#     isDuplicated, isSolanaShim, payload, and txHash.
+#     Evidence: wormhole-explorer api/routes/wormscan/vaa/types.go
+#     DuplicateVaaResponse and FindDuplicatedById in controller.go.
+#     Live non-duplicate ids return 404; no 200 sample was available.
+| .definitions["vaa.DuplicateVaaDoc"] = {
+    type: "object",
+    properties: {
+      digest: {type: "string"},
+      emitterAddr: {type: "string"},
+      emitterChain: {"$ref": "#/definitions/vaa.ChainID"},
+      emitterNativeAddr: {type: "string"},
+      guardianSetIndex: {type: "integer"},
+      id: {type: "string"},
+      indexedAt: {type: "string", format: "date-time"},
+      sequence: {type: "string"},
+      timestamp: {type: "string", format: "date-time"},
+      updatedAt: {type: "string", format: "date-time"},
+      vaa: {type: "string", format: "byte"},
+      version: {type: "integer"}
+    }
+  }
+| .definitions["response.Response-array_vaa_DuplicateVaaDoc"] = {
+    type: "object",
+    properties: {
+      data: {type: "array", items: {"$ref": "#/definitions/vaa.DuplicateVaaDoc"}},
+      pagination: {"$ref": "#/definitions/response.ResponsePagination"}
+    }
+  }
+| .paths["/api/v1/vaas/{chain_id}/{emitter}/{seq}/duplicated"].get.responses["200"].schema =
+    {"$ref": "#/definitions/response.Response-array_vaa_DuplicateVaaDoc"}
+
+# 41. find-observations-by-id returns one ObservationDoc, not an array.
+#     Evidence: wormhole-explorer api/handlers/observations/service.go FindOne
+#     returns *ObservationDoc; the controller JSON-encodes that single value.
+| .paths["/api/v1/observations/{chain}/{emitter}/{sequence}/{signer}/{hash}"].get.responses["200"].schema =
+    {"$ref": "#/definitions/observations.ObservationDoc"}

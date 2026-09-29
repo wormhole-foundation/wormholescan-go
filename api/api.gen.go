@@ -810,6 +810,12 @@ type ResponseResponseArrayGovernorNotionalLimitDetail struct {
 	Pagination *ResponseResponsePagination    `json:"pagination,omitempty"`
 }
 
+// ResponseResponseArrayVaaDuplicateVaaDoc defines model for response.Response-array_vaa_DuplicateVaaDoc.
+type ResponseResponseArrayVaaDuplicateVaaDoc struct {
+	Data       *[]VaaDuplicateVaaDoc       `json:"data,omitempty"`
+	Pagination *ResponseResponsePagination `json:"pagination,omitempty"`
+}
+
 // ResponseResponseArrayVaaVaaDoc defines model for response.Response-array_vaa_VaaDoc.
 type ResponseResponseArrayVaaVaaDoc struct {
 	Data       *[]VaaVaaDoc                `json:"data,omitempty"`
@@ -1174,6 +1180,22 @@ type TransactionsTx struct {
 
 // VaaChainID defines model for vaa.ChainID.
 type VaaChainID int32
+
+// VaaDuplicateVaaDoc defines model for vaa.DuplicateVaaDoc.
+type VaaDuplicateVaaDoc struct {
+	Digest            *string     `json:"digest,omitempty"`
+	EmitterAddr       *string     `json:"emitterAddr,omitempty"`
+	EmitterChain      *VaaChainID `json:"emitterChain,omitempty"`
+	EmitterNativeAddr *string     `json:"emitterNativeAddr,omitempty"`
+	GuardianSetIndex  *int        `json:"guardianSetIndex,omitempty"`
+	Id                *string     `json:"id,omitempty"`
+	IndexedAt         *time.Time  `json:"indexedAt,omitempty"`
+	Sequence          *string     `json:"sequence,omitempty"`
+	Timestamp         *time.Time  `json:"timestamp,omitempty"`
+	UpdatedAt         *time.Time  `json:"updatedAt,omitempty"`
+	Vaa               *[]byte     `json:"vaa,omitempty"`
+	Version           *int        `json:"version,omitempty"`
+}
 
 // VaaVaaDoc defines model for vaa.VaaDoc.
 type VaaVaaDoc struct {
@@ -8702,7 +8724,7 @@ func (r FindObservationsBySequenceResponse) StatusCode() int {
 type FindObservationsByIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]ObservationsObservationDoc
+	JSON200      *ObservationsObservationDoc
 	JSON400      *ResponseError
 	JSON500      *ResponseError
 }
@@ -9322,7 +9344,7 @@ func (r FindVaaByIdResponse) StatusCode() int {
 type FindDuplicatedVaaByIdResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ResponseResponseArrayVaaVaaDoc
+	JSON200      *ResponseResponseArrayVaaDuplicateVaaDoc
 	JSON400      *ResponseError
 	JSON500      *ResponseError
 }
@@ -11674,7 +11696,7 @@ func ParseFindObservationsByIdResponse(rsp *http.Response) (*FindObservationsByI
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []ObservationsObservationDoc
+		var dest ObservationsObservationDoc
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -12662,7 +12684,7 @@ func ParseFindDuplicatedVaaByIdResponse(rsp *http.Response) (*FindDuplicatedVaaB
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResponseResponseArrayVaaVaaDoc
+		var dest ResponseResponseArrayVaaDuplicateVaaDoc
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
