@@ -93,3 +93,42 @@ def is_rfc3339_field($def; $name):
       then .value.schema = {"$ref": "#/definitions/response.Error"} else . end
     )
   ))
+# 20. /v1/signed_vaa and /v1/signed_batch_vaa declare vaaBytes as an integer
+#     array; the live server sends a base64 string. Recorded
+#     /v1/signed_vaa/1/19671a08a9cef6f3a04314ed478fc332a4966f41ad3e6fea76933dede9c6cdfe/755119
+#     returns {"vaaBytes":"AQAAAAcN..."}. Rule 3 only rewrites .definitions.
+| .paths["/v1/signed_vaa/{chain_id}/{emitter}/{seq}"].get.responses["200"].schema.properties.vaaBytes = {type: "string", format: "byte"}
+| .paths["/v1/signed_batch_vaa/{chain_id}/{emitter}/sequence/{seq}"].get.responses["200"].schema.properties.vaaBytes = {type: "string", format: "byte"}
+
+# 21. /v1/governor/is_vaa_enqueued returns {"isEnqueued": bool}, not
+#     governor.EnqueuedVaaResponse. Recorded live: {"isEnqueued":false}.
+| .definitions["guardian.IsVaaEnqueuedResponse"] = {
+    type: "object",
+    properties: {isEnqueued: {type: "boolean"}}
+  }
+| .paths["/v1/governor/is_vaa_enqueued/{chain_id}/{emitter}/{seq}"].get.responses["200"].schema = {"$ref": "#/definitions/guardian.IsVaaEnqueuedResponse"}
+
+# 22. /v1/governor/token_list returns {"entries":[TokenList]}, not a bare array.
+#     Recorded live response is an object with an entries array of
+#     originChainId/originAddress/price.
+| .definitions["guardian.TokenListResponse"] = {
+    type: "object",
+    properties: {
+      entries: {type: "array", items: {"$ref": "#/definitions/governor.TokenList"}}
+    }
+  }
+| .paths["/v1/governor/token_list"].get.responses["200"].schema = {"$ref": "#/definitions/guardian.TokenListResponse"}
+
+# 23. heartbeats.HeartbeatNetworkResponse omits safeHeight and finalizedHeight.
+#     Guardiand Heartbeat.Network sends them as decimal strings (same as height).
+#     Wormholescan currently omits them (recorded /v1/heartbeats); keep the
+#     fields so a guardian --publicWeb response still maps.
+| .definitions["heartbeats.HeartbeatNetworkResponse"].properties += {
+    safeHeight: {type: "string"},
+    finalizedHeight: {type: "string"}
+  }
+
+# 24. heartbeats.RawHeartbeat omits p2pNodeId. Guardiand Heartbeat.p2pNodeId is
+#     bytes (JSON base64). Wormholescan currently omits it (recorded
+#     /v1/heartbeats); keep the field so a guardian --publicWeb response maps.
+| .definitions["heartbeats.RawHeartbeat"].properties.p2pNodeId = {type: "string", format: "byte"}

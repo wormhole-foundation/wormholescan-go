@@ -427,6 +427,16 @@ type GuardianGuardianSetResponse struct {
 	GuardianSet *GithubComWormholeFoundationWormholeExplorerApiRoutesGuardianGuardianGuardianSet `json:"guardianSet,omitempty"`
 }
 
+// GuardianIsVaaEnqueuedResponse defines model for guardian.IsVaaEnqueuedResponse.
+type GuardianIsVaaEnqueuedResponse struct {
+	IsEnqueued *bool `json:"isEnqueued,omitempty"`
+}
+
+// GuardianTokenListResponse defines model for guardian.TokenListResponse.
+type GuardianTokenListResponse struct {
+	Entries *[]GovernorTokenList `json:"entries,omitempty"`
+}
+
 // GuardianSetsGuardianAddress defines model for guardian_sets.GuardianAddress.
 type GuardianSetsGuardianAddress struct {
 	Address *string `json:"address,omitempty"`
@@ -443,8 +453,10 @@ type GuardianSetsGuardianSetDoc struct {
 type HeartbeatsHeartbeatNetworkResponse struct {
 	ContractAddress *string `json:"contractAddress,omitempty"`
 	ErrorCount      *string `json:"errorCount,omitempty"`
+	FinalizedHeight *string `json:"finalizedHeight,omitempty"`
 	Height          *string `json:"height,omitempty"`
 	Id              *int    `json:"id,omitempty"`
+	SafeHeight      *string `json:"safeHeight,omitempty"`
 }
 
 // HeartbeatsHeartbeatResponse defines model for heartbeats.HeartbeatResponse.
@@ -467,6 +479,7 @@ type HeartbeatsRawHeartbeat struct {
 	GuardianAddr  *string                               `json:"guardianAddr,omitempty"`
 	Networks      *[]HeartbeatsHeartbeatNetworkResponse `json:"networks,omitempty"`
 	NodeName      *string                               `json:"nodeName,omitempty"`
+	P2pNodeId     *[]byte                               `json:"p2pNodeId,omitempty"`
 	Timestamp     *string                               `json:"timestamp,omitempty"`
 	Version       *string                               `json:"version,omitempty"`
 }
@@ -9500,7 +9513,7 @@ func (r GuardiansEnqueuedVaasResponse) StatusCode() int {
 type GuardiansIsVaaEnqueuedResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *GovernorEnqueuedVaaResponse
+	JSON200      *GuardianIsVaaEnqueuedResponse
 	JSON400      *ResponseError
 	JSON500      *ResponseError
 }
@@ -9524,7 +9537,7 @@ func (r GuardiansIsVaaEnqueuedResponse) StatusCode() int {
 type GuardiansTokenListResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]GovernorTokenList
+	JSON200      *GuardianTokenListResponse
 	JSON400      *ResponseError
 	JSON500      *ResponseError
 }
@@ -9597,7 +9610,7 @@ type GuardiansFindSignedBatchVaaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		VaaBytes *[]int32 `json:"vaaBytes,omitempty"`
+		VaaBytes *[]byte `json:"vaaBytes,omitempty"`
 	}
 	JSON400 *ResponseError
 	JSON500 *ResponseError
@@ -9623,7 +9636,7 @@ type GuardiansFindSignedVaaResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *struct {
-		VaaBytes *[]int32 `json:"vaaBytes,omitempty"`
+		VaaBytes *[]byte `json:"vaaBytes,omitempty"`
 	}
 	JSON400 *ResponseError
 	JSON500 *ResponseError
@@ -12962,7 +12975,7 @@ func ParseGuardiansIsVaaEnqueuedResponse(rsp *http.Response) (*GuardiansIsVaaEnq
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest GovernorEnqueuedVaaResponse
+		var dest GuardianIsVaaEnqueuedResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13002,7 +13015,7 @@ func ParseGuardiansTokenListResponse(rsp *http.Response) (*GuardiansTokenListRes
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []GovernorTokenList
+		var dest GuardianTokenListResponse
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -13123,7 +13136,7 @@ func ParseGuardiansFindSignedBatchVaaResponse(rsp *http.Response) (*GuardiansFin
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			VaaBytes *[]int32 `json:"vaaBytes,omitempty"`
+			VaaBytes *[]byte `json:"vaaBytes,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
@@ -13165,7 +13178,7 @@ func ParseGuardiansFindSignedVaaResponse(rsp *http.Response) (*GuardiansFindSign
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest struct {
-			VaaBytes *[]int32 `json:"vaaBytes,omitempty"`
+			VaaBytes *[]byte `json:"vaaBytes,omitempty"`
 		}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
