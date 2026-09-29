@@ -302,107 +302,46 @@ func (c *Client) GetMaxNotionalAvailable(ctx context.Context, chain ChainID) (Ma
 	return fromAPIMaxNotionalAvailable(*rsp.JSON200.Data), nil
 }
 
-// ListEnqueuedVAAs returns one page of enqueued VAAs across chains.
-func (c *Client) ListEnqueuedVAAs(
-	ctx context.Context,
-	opts EnqueuedVAAListOptions,
-) (Page[EnqueuedVAA], error) {
-	params := &api.GovernorEnqueuedVaasParams{
-		Page:     intParam(opts.Page),
-		PageSize: intParam(opts.PageSize),
-	}
-	if opts.Sort != "" {
-		sort := api.GovernorEnqueuedVaasParamsSortOrder(opts.Sort)
-		params.SortOrder = &sort
-	}
-	rsp, err := c.api.GovernorEnqueuedVaasWithResponse(ctx, params)
+// EnqueuedVAAs returns every enqueued VAA across chains.
+//
+// The server does not page this endpoint.
+func (c *Client) EnqueuedVAAs(ctx context.Context) ([]EnqueuedVAA, error) {
+	rsp, err := c.api.GovernorEnqueuedVaasWithResponse(ctx, nil)
 	if err != nil {
-		return Page[EnqueuedVAA]{}, wrapDecodeError(opGovernorEnqueuedVaas, err)
+		return nil, wrapDecodeError(opGovernorEnqueuedVaas, err)
 	}
 	if err = finishOK(opGovernorEnqueuedVaas, rsp.HTTPResponse, rsp.Body, rsp.JSON200); err != nil {
-		return Page[EnqueuedVAA]{}, err
+		return nil, err
 	}
-	return Page[EnqueuedVAA]{
-		Items:    fromAPIEnqueuedVaaGroups(deref(rsp.JSON200.Data)),
-		Page:     opts.Page,
-		PageSize: opts.PageSize,
-	}, nil
+	return fromAPIEnqueuedVaaGroups(deref(rsp.JSON200.Data)), nil
 }
 
-// EnqueuedVAAs iterates enqueued VAAs starting at opts.Page.
-func (c *Client) EnqueuedVAAs(
-	ctx context.Context,
-	opts EnqueuedVAAListOptions,
-) iter.Seq2[EnqueuedVAA, error] {
-	fetch := func(ctx context.Context, page PageOptions) (Page[EnqueuedVAA], error) {
-		next := opts
-		next.PageOptions = page
-		return c.ListEnqueuedVAAs(ctx, next)
-	}
-	return paginate(ctx, opts.PageOptions, fetch)
-}
-
-// ListEnqueuedVAAsByChain returns one page of enqueued VAAs for chain.
-func (c *Client) ListEnqueuedVAAsByChain(
-	ctx context.Context,
-	chain ChainID,
-	opts EnqueuedVAAListOptions,
-) (Page[EnqueuedVAA], error) {
-	params := &api.GuardiansEnqueuedVaasByChainParams{
-		Page:     intParam(opts.Page),
-		PageSize: intParam(opts.PageSize),
-	}
-	if opts.Sort != "" {
-		sort := api.GuardiansEnqueuedVaasByChainParamsSortOrder(opts.Sort)
-		params.SortOrder = &sort
-	}
-	rsp, err := c.api.GuardiansEnqueuedVaasByChainWithResponse(ctx, int(chain), params)
+// EnqueuedVAAsByChain returns every enqueued VAA for chain.
+//
+// The server does not page this endpoint.
+func (c *Client) EnqueuedVAAsByChain(ctx context.Context, chain ChainID) ([]EnqueuedVAA, error) {
+	rsp, err := c.api.GuardiansEnqueuedVaasByChainWithResponse(ctx, int(chain), nil)
 	if err != nil {
-		return Page[EnqueuedVAA]{}, wrapDecodeError(opGuardiansEnqueuedVaasByChain, err)
+		return nil, wrapDecodeError(opGuardiansEnqueuedVaasByChain, err)
 	}
 	if err = finishOK(opGuardiansEnqueuedVaasByChain, rsp.HTTPResponse, rsp.Body, rsp.JSON200); err != nil {
-		return Page[EnqueuedVAA]{}, err
+		return nil, err
 	}
-	return Page[EnqueuedVAA]{
-		Items:    mapSlice(deref(rsp.JSON200.Data), fromAPIEnqueuedVaaDetail),
-		Page:     opts.Page,
-		PageSize: opts.PageSize,
-	}, nil
+	return mapSlice(deref(rsp.JSON200.Data), fromAPIEnqueuedVaaDetail), nil
 }
 
-// ListGovernorVAAs returns one page of VAAs tracked by the governor.
+// GovernorVAAs returns every VAA currently tracked by the governor.
 //
-// The server returns a bare array and ignores page query parameters, so this
-// method slices the array using opts. PageSize is always taken from opts.
-func (c *Client) ListGovernorVAAs(
-	ctx context.Context,
-	opts GovernorVAAListOptions,
-) (Page[GovernorVAA], error) {
+// The server returns a bare array and does not page this endpoint.
+func (c *Client) GovernorVAAs(ctx context.Context) ([]GovernorVAA, error) {
 	rsp, err := c.api.GovernorVaasWithResponse(ctx)
 	if err != nil {
-		return Page[GovernorVAA]{}, wrapDecodeError(opGovernorVaas, err)
+		return nil, wrapDecodeError(opGovernorVaas, err)
 	}
 	if err = finishOK(opGovernorVaas, rsp.HTTPResponse, rsp.Body, rsp.JSON200); err != nil {
-		return Page[GovernorVAA]{}, err
+		return nil, err
 	}
-	return Page[GovernorVAA]{
-		Items:    slicePage(mapSlice(deref(rsp.JSON200), fromAPIGovernorVAA), opts.PageOptions),
-		Page:     opts.Page,
-		PageSize: opts.PageSize,
-	}, nil
-}
-
-// GovernorVAAs iterates governor VAAs starting at opts.Page.
-func (c *Client) GovernorVAAs(
-	ctx context.Context,
-	opts GovernorVAAListOptions,
-) iter.Seq2[GovernorVAA, error] {
-	fetch := func(ctx context.Context, page PageOptions) (Page[GovernorVAA], error) {
-		next := opts
-		next.PageOptions = page
-		return c.ListGovernorVAAs(ctx, next)
-	}
-	return paginate(ctx, opts.PageOptions, fetch)
+	return mapSlice(deref(rsp.JSON200), fromAPIGovernorVAA), nil
 }
 
 // finishOK returns an API or decode error for a generated 2xx JSON body.

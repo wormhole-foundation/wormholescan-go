@@ -95,7 +95,7 @@ func TestGetGovernorStatus(t *testing.T) {
 	}
 }
 
-func TestListEnqueuedVAAsByChainNotFound(t *testing.T) {
+func TestEnqueuedVAAsByChainNotFound(t *testing.T) {
 	t.Parallel()
 
 	body := readGovernorFixture(t, "governor_enqueued_vaas_chain.json")
@@ -106,7 +106,7 @@ func TestListEnqueuedVAAsByChainNotFound(t *testing.T) {
 	})
 	c := newGovernorClient(t, handler)
 
-	_, err := c.ListEnqueuedVAAsByChain(t.Context(), ChainIDEthereum, EnqueuedVAAListOptions{})
+	_, err := c.EnqueuedVAAsByChain(t.Context(), ChainIDEthereum)
 	require.ErrorIs(t, err, ErrNotFound)
 	var apiErr *APIError
 	require.ErrorAs(t, err, &apiErr)
@@ -145,44 +145,29 @@ func TestGovernorConfigsWalksTwoPages(t *testing.T) {
 	assert.Equal(t, int32(2), fetches.Load())
 }
 
-func TestListGovernorVAAsBareArray(t *testing.T) {
+func TestGovernorVAAsBareArray(t *testing.T) {
 	t.Parallel()
 
 	c := newGovernorClient(t, governorFixtureHandler(t, "governor_vaas.json"))
-
-	page, err := c.ListGovernorVAAs(t.Context(), GovernorVAAListOptions{
-		PageOptions: PageOptions{PageSize: governorTestPageSize},
-	})
+	got, err := c.GovernorVAAs(t.Context())
 	require.NoError(t, err)
-	assert.Equal(t, governorTestPageSize, page.PageSize)
-	require.Len(t, page.Items, governorTestPageSize)
-	assert.False(t, page.Last())
-	assert.Equal(t, GovernorVAAStatusIssued, page.Items[0].Status)
-	assert.Equal(t, ChainIDBSC, page.Items[0].Chain)
-
-	const largerPage = 3
-	page, err = c.ListGovernorVAAs(t.Context(), GovernorVAAListOptions{
-		PageOptions: PageOptions{PageSize: largerPage},
-	})
-	require.NoError(t, err)
-	assert.Equal(t, largerPage, page.PageSize)
-	require.Len(t, page.Items, governorTestPageSize)
-	assert.True(t, page.Last())
+	require.Len(t, got, governorTestPageSize)
+	assert.Equal(t, GovernorVAAStatusIssued, got[0].Status)
+	assert.Equal(t, ChainIDBSC, got[0].Chain)
+	assert.Equal(t, "874517", got[0].Sequence)
 }
 
-func TestListEnqueuedVAAsByChain(t *testing.T) {
+func TestEnqueuedVAAsByChain(t *testing.T) {
 	t.Parallel()
 
 	c := newGovernorClient(t, governorFixtureHandler(t, "governor_enqueued_vaas_chain_1.json"))
-	page, err := c.ListEnqueuedVAAsByChain(t.Context(), ChainIDSolana, EnqueuedVAAListOptions{
-		PageOptions: PageOptions{PageSize: governorTestPageSize},
-	})
+	got, err := c.EnqueuedVAAsByChain(t.Context(), ChainIDSolana)
 	require.NoError(t, err)
-	require.Len(t, page.Items, governorTestPageSize)
-	assert.Equal(t, ChainIDSolana, page.Items[0].Chain)
-	assert.Equal(t, uint64(1384028), page.Items[0].Sequence)
-	assert.Equal(t, uint64(1168266), page.Items[0].NotionalValue)
-	assert.False(t, page.Items[0].ReleaseTime.IsZero())
+	require.Len(t, got, governorTestPageSize)
+	assert.Equal(t, ChainIDSolana, got[0].Chain)
+	assert.Equal(t, uint64(1384028), got[0].Sequence)
+	assert.Equal(t, uint64(1168266), got[0].NotionalValue)
+	assert.False(t, got[0].ReleaseTime.IsZero())
 }
 
 func newGovernorClient(t *testing.T, handler http.Handler) *Client {

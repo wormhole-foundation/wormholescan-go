@@ -199,12 +199,6 @@ type EnqueuedVAA struct {
 	ReleaseTime time.Time
 }
 
-// EnqueuedVAAListOptions filters a page of enqueued VAAs.
-type EnqueuedVAAListOptions struct {
-	// PageOptions selects the page of enqueued VAAs to return.
-	PageOptions
-}
-
 // GovernorVAA is a VAA currently tracked by the governor.
 type GovernorVAA struct {
 	// VAAID is the chain/emitter/sequence identifier as the server sends it.
@@ -234,12 +228,6 @@ const (
 	// GovernorVAAStatusPending is a VAA still held by the governor.
 	GovernorVAAStatusPending GovernorVAAStatus = "pending"
 )
-
-// GovernorVAAListOptions filters a page of governor VAAs.
-type GovernorVAAListOptions struct {
-	// PageOptions selects the page of governor VAAs to return.
-	PageOptions
-}
 
 // fromAPIGovernorConfig maps a generated governor config document.
 func fromAPIGovernorConfig(src api.GovernorGovConfig) GovernorConfig {
@@ -631,17 +619,4 @@ func anyTime(v any) time.Time {
 	default:
 		return time.Time{}
 	}
-}
-
-// slicePage returns the opts page of items. PageSize 0 returns items unchanged.
-func slicePage[T any](items []T, opts PageOptions) []T {
-	if opts.PageSize <= 0 {
-		return items
-	}
-	start := opts.Page * opts.PageSize
-	if start >= len(items) {
-		return []T{}
-	}
-	end := min(start+opts.PageSize, len(items))
-	return items[start:end]
 }
