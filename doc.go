@@ -2,7 +2,7 @@
 // (https://api.wormholescan.io), the public explorer API for the Wormhole
 // network.
 //
-// This package will hold the hand-written, stable client. It is empty for
-// now; the generated one-method-per-operation client lives in the api
-// subpackage.
+// [New] returns a client pointed at mainnet. Use [WithBaseURL] with
+// [TestnetURL] for testnet. Endpoints this package does not wrap are
+// available through [Client.API], the generated api subpackage.
 package wormholescan
