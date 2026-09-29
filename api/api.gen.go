@@ -274,7 +274,7 @@ type GovernorEnqueuedVaa struct {
 	ChainId        *VaaChainID `json:"chainId,omitempty"`
 	EmitterAddress *string     `json:"emitterAddress,omitempty"`
 	NotionalValue  *int        `json:"notionalValue,omitempty"`
-	Sequence       *string     `json:"sequence,omitempty"`
+	Sequence       *int64      `json:"sequence,omitempty"`
 	TxHash         *string     `json:"txHash,omitempty"`
 }
 
@@ -284,7 +284,7 @@ type GovernorEnqueuedVaaDetail struct {
 	EmitterAddress *string     `json:"emitterAddress,omitempty"`
 	NotionalValue  *int        `json:"notionalValue,omitempty"`
 	ReleaseTime    *int        `json:"releaseTime,omitempty"`
-	Sequence       *string     `json:"sequence,omitempty"`
+	Sequence       *int64      `json:"sequence,omitempty"`
 	TxHash         *string     `json:"txHash,omitempty"`
 }
 
@@ -331,7 +331,7 @@ type GovernorGovConfigChains struct {
 type GovernorGovConfigfTokens struct {
 	OriginAddress *string  `json:"originAddress,omitempty"`
 	OriginChainId *int     `json:"originChainId,omitempty"`
-	Price         *float32 `json:"price,omitempty"`
+	Price         *float64 `json:"price,omitempty"`
 }
 
 // GovernorGovStatus defines model for governor.GovStatus.
@@ -777,6 +777,12 @@ type ResponseResponseArrayGovernorEnqueuedVaaDetail struct {
 // ResponseResponseArrayGovernorEnqueuedVaas defines model for response.Response-array_governor_EnqueuedVaas.
 type ResponseResponseArrayGovernorEnqueuedVaas struct {
 	Data       *[]GovernorEnqueuedVaas     `json:"data,omitempty"`
+	Pagination *ResponseResponsePagination `json:"pagination,omitempty"`
+}
+
+// ResponseResponseArrayGovernorGovConfig defines model for response.Response-array_governor_GovConfig.
+type ResponseResponseArrayGovernorGovConfig struct {
+	Data       *[]GovernorGovConfig        `json:"data,omitempty"`
 	Pagination *ResponseResponsePagination `json:"pagination,omitempty"`
 }
 
@@ -7984,7 +7990,7 @@ func (r FindGlobalTransactionByIdResponse) StatusCode() int {
 type GovernorConfigResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *ResponseResponseGovernorGovConfig
+	JSON200      *ResponseResponseArrayGovernorGovConfig
 	JSON400      *ResponseError
 	JSON500      *ResponseError
 }
@@ -10496,7 +10502,7 @@ func ParseGovernorConfigResponse(rsp *http.Response) (*GovernorConfigResponse, e
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ResponseResponseGovernorGovConfig
+		var dest ResponseResponseArrayGovernorGovConfig
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

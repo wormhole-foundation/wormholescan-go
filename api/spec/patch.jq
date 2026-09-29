@@ -143,6 +143,31 @@ def is_rfc3339_field($def; $name):
 #     /v1/heartbeats); keep the field so a guardian --publicWeb response maps.
 | .definitions["heartbeats.RawHeartbeat"].properties.p2pNodeId = {type: "string", format: "byte"}
 
+# 30. /api/v1/governor/config returns {"data":[GovConfig,...]}, not a single
+#     GovConfig. Evidence: GET https://api.wormholescan.io/api/v1/governor/config?pageSize=2
+#     on 2026-09-29, data is an array of two guardian configs.
+| .definitions["response.Response-array_governor_GovConfig"] = {
+    type: "object",
+    properties: {
+      data: {type: "array", items: {"$ref": "#/definitions/governor.GovConfig"}},
+      pagination: {"$ref": "#/definitions/response.ResponsePagination"}
+    }
+  }
+| .paths["/api/v1/governor/config"].get.responses["200"].schema =
+    {"$ref": "#/definitions/response.Response-array_governor_GovConfig"}
+
+# 31. governor.EnqueuedVaa.sequence and governor.EnqueuedVaaDetail.sequence are
+#     typed as strings; the server sends JSON numbers.
+#     Evidence: GET /api/v1/governor/enqueued_vaas/?pageSize=2 and
+#     GET /api/v1/governor/enqueued_vaas/1?pageSize=2 on 2026-09-29.
+| .definitions["governor.EnqueuedVaa"].properties.sequence = {type: "integer", format: "int64"}
+| .definitions["governor.EnqueuedVaaDetail"].properties.sequence = {type: "integer", format: "int64"}
+
+# 32. governor.GovConfigfTokens.price is a JSON number; without format:double
+#     oapi-codegen emits float32 and live prices such as 0.01231905 do not
+#     round-trip. Evidence: GET /api/v1/governor/config/{guardian} on 2026-09-29.
+| .definitions["governor.GovConfigfTokens"].properties.price = {type: "number", format: "double"}
+
 # 40. /api/v1/vaas/{chain_id}/{emitter}/{seq}/duplicated returns
 #     {"data":[DuplicateVaaDoc]} whose sequence is a string and which omits
 #     isDuplicated, isSolanaShim, payload, and txHash.
