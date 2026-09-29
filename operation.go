@@ -201,9 +201,14 @@ func joinChainIDs(ids []ChainID) string {
 // vaaIDPath converts a VAA id into generated path parameters.
 func vaaIDPath(id VAAID) (int, string, int, error) {
 	if id.Sequence > uint64(math.MaxInt) {
-		return 0, "", 0, fmt.Errorf("%sVAA sequence %d exceeds path parameter range", errPrefix, id.Sequence)
+		return 0, "", 0, fmt.Errorf(
+			"%sVAA sequence %d exceeds path parameter range",
+			errPrefix,
+			id.Sequence,
+		)
 	}
-	return int(id.Chain), string(id.Emitter), int(id.Sequence), nil //nolint:gosec // sequence checked against MaxInt; chain is uint16
+	seq := int(id.Sequence) //nolint:gosec // sequence checked against MaxInt
+	return int(id.Chain), string(id.Emitter), seq, nil
 }
 
 // wrapCall prefixes a generated-client error with the operation id.
@@ -300,7 +305,7 @@ func fromAPIStandardizedProperties(p *api.OperationsStandardizedProperties) Stan
 }
 
 // fromAPIOperationData maps generated token-transfer display data.
-func fromAPIOperationData(p *map[string]interface{}) OperationData {
+func fromAPIOperationData(p *map[string]any) OperationData {
 	if p == nil {
 		return OperationData{}
 	}
@@ -546,7 +551,7 @@ func chainIDFromInt(id *int) ChainID {
 }
 
 // fromAPIAnyMap copies a generated additionalProperties object.
-func fromAPIAnyMap(p *map[string]interface{}) map[string]any {
+func fromAPIAnyMap(p *map[string]any) map[string]any {
 	if p == nil {
 		return nil
 	}

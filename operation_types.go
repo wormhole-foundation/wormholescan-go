@@ -202,6 +202,7 @@ type Attribute struct {
 type OperationListOptions struct {
 	// PageOptions selects which page to return.
 	PageOptions
+
 	// Address filters by emitter or user address.
 	Address string
 	// TxHash filters by a source transaction hash.
