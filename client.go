@@ -41,6 +41,8 @@ const (
 type Client struct {
 	// api is the generated client sharing this client's transport and headers.
 	api *api.ClientWithResponses
+	// rateLimit is the last rate-limit state seen on any response.
+	rateLimit *rateLimitState
 }
 
 // config is the resolved client configuration after applying options.
@@ -73,7 +75,8 @@ func New(opts ...Option) (*Client, error) {
 			return nil, err
 		}
 	}
-	httpClient := buildHTTPClient(cfg)
+	rateLimit := &rateLimitState{}
+	httpClient := buildHTTPClient(cfg, rateLimit)
 	apiClient, err := api.NewClientWithResponses(
 		cfg.baseURL,
 		api.WithHTTPClient(httpClient),
@@ -82,7 +85,7 @@ func New(opts ...Option) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("%screate API client: %w", errPrefix, err)
 	}
-	return &Client{api: apiClient}, nil
+	return &Client{api: apiClient, rateLimit: rateLimit}, nil
 }
 
 // WithBaseURL sets the API origin. The value must include a scheme and host.
@@ -187,8 +190,8 @@ func userAgentEditor(ua string) api.RequestEditorFn {
 }
 
 // buildHTTPClient returns the HTTP client used for all requests, wrapping its
-// transport with retry policy.
-func buildHTTPClient(cfg config) *http.Client {
+// transport with retry policy and rate-limit observation.
+func buildHTTPClient(cfg config, rateLimit *rateLimitState) *http.Client {
 	httpClient := cfg.httpClient
 	if httpClient == nil {
 		httpClient = &http.Client{Timeout: defaultHTTPTimeout}
@@ -201,15 +204,17 @@ func buildHTTPClient(cfg config) *http.Client {
 		base = http.DefaultTransport
 	}
 	httpClient.Transport = &retryTransport{
-		base:     base,
-		attempts: cfg.retryAttempts,
-		backoff:  cfg.retryBackoff,
+		base:      base,
+		attempts:  cfg.retryAttempts,
+		backoff:   cfg.retryBackoff,
+		rateLimit: rateLimit,
 	}
 	return httpClient
 }
 
 // retryTransport retries idempotent requests on transport errors and a small
-// set of HTTP status codes.
+// set of HTTP status codes, and records rate-limit headers from every
+// response.
 type retryTransport struct {
 	// base performs the actual request.
 	base http.RoundTripper
@@ -217,6 +222,8 @@ type retryTransport struct {
 	attempts int
 	// backoff is the base delay for exponential full-jitter backoff.
 	backoff time.Duration
+	// rateLimit receives the X-RateLimit-* headers of each response.
+	rateLimit *rateLimitState
 }
 
 // RoundTrip implements [http.RoundTripper].
@@ -229,6 +236,7 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 			return nil, err
 		}
 		resp, err := t.base.RoundTrip(req)
+		t.rateLimit.observe(resp, time.Now())
 		if attempt >= t.attempts || !retriable(req, resp, err) {
 			return resp, err
 		}
