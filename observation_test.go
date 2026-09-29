@@ -17,7 +17,7 @@ const (
 func TestListObservationsBareArray(t *testing.T) {
 	t.Parallel()
 
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := newTestClientNoRetry(t, func(w http.ResponseWriter, r *http.Request) {
 		assert.Equal(t, "/api/v1/observations", r.URL.Path)
 		assert.Equal(t, "2", r.URL.Query().Get("pageSize"))
 		writeFixture(t, w, "observation_list.json")
@@ -43,7 +43,7 @@ func TestGetObservationPathUsesHexHash(t *testing.T) {
 	require.NoError(t, err)
 
 	var gotPath string
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := newTestClientNoRetry(t, func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		writeFixture(t, w, "observation_by_id.json")
 	})
@@ -65,7 +65,7 @@ func TestGetDelegateObservationPath(t *testing.T) {
 	require.NoError(t, err)
 
 	var gotPath string
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := newTestClientNoRetry(t, func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		w.Header().Set("Content-Type", "application/json")
 		_, writeErr := w.Write([]byte(`[{

@@ -308,11 +308,15 @@ func (c *Client) DelegateObservationsByChain(
 	chain ChainID,
 	opts ObservationListOptions,
 ) iter.Seq2[DelegateObservation, error] {
-	return paginate(ctx, opts.PageOptions, func(ctx context.Context, page PageOptions) (Page[DelegateObservation], error) {
-		o := opts
-		o.PageOptions = page
-		return c.ListDelegateObservationsByChain(ctx, chain, o)
-	})
+	return paginate(
+		ctx,
+		opts.PageOptions,
+		func(ctx context.Context, page PageOptions) (Page[DelegateObservation], error) {
+			o := opts
+			o.PageOptions = page
+			return c.ListDelegateObservationsByChain(ctx, chain, o)
+		},
+	)
 }
 
 // ListDelegateObservationsByEmitter returns one page of delegate observations for emitter on chain.
@@ -347,11 +351,15 @@ func (c *Client) DelegateObservationsByEmitter(
 	emitter EmitterAddress,
 	opts ObservationListOptions,
 ) iter.Seq2[DelegateObservation, error] {
-	return paginate(ctx, opts.PageOptions, func(ctx context.Context, page PageOptions) (Page[DelegateObservation], error) {
-		o := opts
-		o.PageOptions = page
-		return c.ListDelegateObservationsByEmitter(ctx, chain, emitter, o)
-	})
+	return paginate(
+		ctx,
+		opts.PageOptions,
+		func(ctx context.Context, page PageOptions) (Page[DelegateObservation], error) {
+			o := opts
+			o.PageOptions = page
+			return c.ListDelegateObservationsByEmitter(ctx, chain, emitter, o)
+		},
+	)
 }
 
 // ListDelegateObservationsByVAA returns one page of delegate observations for id.
@@ -389,11 +397,15 @@ func (c *Client) DelegateObservationsByVAA(
 	id VAAID,
 	opts ObservationListOptions,
 ) iter.Seq2[DelegateObservation, error] {
-	return paginate(ctx, opts.PageOptions, func(ctx context.Context, page PageOptions) (Page[DelegateObservation], error) {
-		o := opts
-		o.PageOptions = page
-		return c.ListDelegateObservationsByVAA(ctx, id, o)
-	})
+	return paginate(
+		ctx,
+		opts.PageOptions,
+		func(ctx context.Context, page PageOptions) (Page[DelegateObservation], error) {
+			o := opts
+			o.PageOptions = page
+			return c.ListDelegateObservationsByVAA(ctx, id, o)
+		},
+	)
 }
 
 // GetDelegateObservation returns the delegate observation for id recorded by guardian.

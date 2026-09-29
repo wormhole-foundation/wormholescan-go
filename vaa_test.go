@@ -2,10 +2,7 @@ package wormholescan
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"testing"
 	"time"
 
@@ -71,7 +68,7 @@ func TestGetVAA(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			c := newTestClient(t, func(w http.ResponseWriter, _ *http.Request) {
+			c := newTestClientNoRetry(t, func(w http.ResponseWriter, _ *http.Request) {
 				writeFixtureStatus(t, w, tt.status, tt.fixture)
 			})
 			got, err := c.GetVAA(t.Context(), id, tt.opts)
@@ -85,7 +82,7 @@ func TestVAAsIteratorWalksTwoPages(t *testing.T) {
 	t.Parallel()
 
 	var pages []string
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := newTestClientNoRetry(t, func(w http.ResponseWriter, r *http.Request) {
 		pages = append(pages, r.URL.Query().Get("page"))
 		switch r.URL.Query().Get("page") {
 		case "", "0":
@@ -114,7 +111,7 @@ func TestListVAAsByEmitterPathAndQuery(t *testing.T) {
 
 	var gotPath string
 	var gotQuery url.Values
-	c := newTestClient(t, func(w http.ResponseWriter, r *http.Request) {
+	c := newTestClientNoRetry(t, func(w http.ResponseWriter, r *http.Request) {
 		gotPath = r.URL.Path
 		gotQuery = r.URL.Query()
 		writeFixture(t, w, "vaa_list.json")
@@ -133,15 +130,6 @@ func TestListVAAsByEmitterPathAndQuery(t *testing.T) {
 	assert.Equal(t, 2, len(page.Items))
 }
 
-func newTestClient(t *testing.T, handler http.HandlerFunc) *Client {
-	t.Helper()
-	srv := httptest.NewServer(handler)
-	t.Cleanup(srv.Close)
-	c, err := New(WithBaseURL(srv.URL), WithoutRetry())
-	require.NoError(t, err)
-	return c
-}
-
 func writeFixture(t *testing.T, w http.ResponseWriter, name string) {
 	t.Helper()
 	writeFixtureStatus(t, w, http.StatusOK, name)
@@ -151,12 +139,6 @@ func writeFixtureStatus(t *testing.T, w http.ResponseWriter, status int, name st
 	t.Helper()
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	_, err := w.Write(testdataBytes(t, name))
+	_, err := w.Write(readTestdata(t, name))
 	require.NoError(t, err)
-}
-func testdataBytes(t *testing.T, name string) []byte {
-	t.Helper()
-	body, err := os.ReadFile(filepath.Join("testdata", name))
-	require.NoError(t, err)
-	return body
 }
