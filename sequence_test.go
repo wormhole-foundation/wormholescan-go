@@ -10,7 +10,7 @@ import (
 )
 
 // governanceVAAID is the Core upgrade to guardian set 5. Its sequence,
-// like many governance sequences, is above math.MaxInt64.
+// like many governance sequences, is above [math.MaxInt64].
 const governanceVAAID = "1/0000000000000000000000000000000000000000000000000000000000000004/18220114619187442754"
 
 // TestSequenceAboveMaxInt64 sends a sequence above 2^63-1 in the path as
