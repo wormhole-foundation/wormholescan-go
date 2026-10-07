@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.2](https://github.com/wormhole-foundation/wormholescan-go/compare/v0.1.1...v0.1.2) (2026-10-07)
+
+
+### Bug Fixes
+
+* send and decode sequences above 2^63-1 ([#17](https://github.com/wormhole-foundation/wormholescan-go/issues/17)) ([a6577aa](https://github.com/wormhole-foundation/wormholescan-go/commit/a6577aab018d0635a9ac3e2ff23b0c0f063e1fe6))
+
 ## [0.1.1](https://github.com/wormhole-foundation/wormholescan-go/compare/v0.1.0...v0.1.1) (2026-09-29)
 
 
