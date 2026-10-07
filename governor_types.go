@@ -447,7 +447,7 @@ func fromAPIEnqueuedVaa(src api.GovernorEnqueuedVaa) EnqueuedVAA {
 		Chain:         chainIDFromAPI(src.ChainId),
 		Emitter:       EmitterAddress(deref(src.EmitterAddress)),
 		NotionalValue: uint64FromInt(src.NotionalValue),
-		Sequence:      uint64FromInt64(deref(src.Sequence)),
+		Sequence:      deref(src.Sequence),
 		TxHash:        TxHash(deref(src.TxHash)),
 	}
 }
@@ -458,7 +458,7 @@ func fromAPIEnqueuedVaaDetail(src api.GovernorEnqueuedVaaDetail) EnqueuedVAA {
 		Chain:         chainIDFromAPI(src.ChainId),
 		Emitter:       EmitterAddress(deref(src.EmitterAddress)),
 		NotionalValue: uint64FromInt(src.NotionalValue),
-		Sequence:      uint64FromInt64(deref(src.Sequence)),
+		Sequence:      deref(src.Sequence),
 		TxHash:        TxHash(deref(src.TxHash)),
 		ReleaseTime:   unixTime(src.ReleaseTime),
 	}

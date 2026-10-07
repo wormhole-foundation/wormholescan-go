@@ -145,7 +145,7 @@ func enqueuedVAAsFromAPI(resp *api.GovernorEnqueuedVaaResponse) []GovernorEnqueu
 			EmitterChain:   chainIDFromVAA(item.EmitterChain),
 			NotionalValue:  deref(item.NotionalValue),
 			ReleaseTime:    timeFromUnixSeconds(item.ReleaseTime),
-			Sequence:       uint64FromInt(item.Sequence),
+			Sequence:       deref(item.Sequence),
 			TxHash:         wormholescan.TxHash(deref(item.TxHash)),
 		})
 	}
@@ -174,12 +174,4 @@ func timeFromUnixSeconds(v *int) time.Time {
 		return time.Time{}
 	}
 	return time.Unix(int64(*v), 0).UTC()
-}
-
-// uint64FromInt converts a generated integer pointer to uint64.
-func uint64FromInt(v *int) uint64 {
-	if v == nil || *v < 0 {
-		return 0
-	}
-	return uint64(*v)
 }

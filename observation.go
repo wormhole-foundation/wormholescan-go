@@ -204,15 +204,11 @@ func (c *Client) ListObservationsByVAA(
 	id VAAID,
 	opts ObservationListOptions,
 ) (Page[Observation], error) {
-	seq, err := pathSequence(id.Sequence)
-	if err != nil {
-		return Page[Observation]{}, err
-	}
 	rsp, err := c.api.FindObservationsBySequenceWithResponse(
 		ctx,
 		pathChain(id.Chain),
 		string(id.Emitter),
-		seq,
+		id.Sequence,
 		findObservationsBySequenceParams(opts),
 	)
 	if err != nil {
@@ -255,15 +251,11 @@ func (c *Client) GetObservation(
 	signer GuardianAddress,
 	hash string,
 ) (Observation, error) {
-	seq, err := pathSequence(id.Sequence)
-	if err != nil {
-		return Observation{}, err
-	}
 	rsp, err := c.api.FindObservationsByIdWithResponse(
 		ctx,
 		pathChain(id.Chain),
 		string(id.Emitter),
-		seq,
+		id.Sequence,
 		string(signer),
 		hash,
 		nil,
@@ -369,15 +361,11 @@ func (c *Client) ListDelegateObservationsByVAA(
 	id VAAID,
 	opts ObservationListOptions,
 ) (Page[DelegateObservation], error) {
-	seq, err := pathSequence(id.Sequence)
-	if err != nil {
-		return Page[DelegateObservation]{}, err
-	}
 	rsp, err := c.api.FindDelegateObservationsBySequenceWithResponse(
 		ctx,
 		pathChain(id.Chain),
 		string(id.Emitter),
-		seq,
+		id.Sequence,
 		findDelegateObservationsBySequenceParams(opts),
 	)
 	if err != nil {
@@ -417,15 +405,11 @@ func (c *Client) GetDelegateObservation(
 	id VAAID,
 	guardian GuardianAddress,
 ) (DelegateObservation, error) {
-	seq, err := pathSequence(id.Sequence)
-	if err != nil {
-		return DelegateObservation{}, err
-	}
 	rsp, err := c.api.FindDelegateObservationsByGuardianWithResponse(
 		ctx,
 		pathChain(id.Chain),
 		string(id.Emitter),
-		seq,
+		id.Sequence,
 		string(guardian),
 		nil,
 	)
@@ -477,7 +461,7 @@ func observationFromAPI(doc api.ObservationsObservationDoc) Observation {
 		ID:              deref(doc.Id),
 		EmitterChain:    chainFromAPI(deref(doc.EmitterChain)),
 		EmitterAddress:  EmitterAddress(deref(doc.EmitterAddr)),
-		Sequence:        uint64FromInt64(deref(doc.Sequence)),
+		Sequence:        deref(doc.Sequence),
 		Hash:            deref(doc.Hash),
 		TxHash:          deref(doc.TxHash),
 		GuardianAddress: GuardianAddress(deref(doc.GuardianAddr)),
@@ -522,7 +506,7 @@ func delegateObservationFromAPI(doc api.DelegateObservationsDelegateObservationD
 		ID:                    deref(doc.Id),
 		EmitterChain:          chainFromAPI(deref(doc.EmitterChain)),
 		EmitterAddress:        EmitterAddress(deref(doc.EmitterAddr)),
-		Sequence:              uint64FromInt64(deref(doc.Sequence)),
+		Sequence:              deref(doc.Sequence),
 		Hash:                  deref(doc.Hash),
 		TxHash:                deref(doc.TxHash),
 		DelegatedGuardianAddr: GuardianAddress(deref(doc.DelegatedGuardianAddr)),

@@ -68,9 +68,9 @@ def is_rfc3339_field($def; $name):
 #    delegate_observations.DelegateObservationDoc render it as a string but
 #    the server sends a number. (operations and governor responses
 #    really do send it as a string.)
-| .definitions["vaa.VaaDoc"].properties.sequence = {type: "integer", format: "int64"}
-| .definitions["observations.ObservationDoc"].properties.sequence = {type: "integer", format: "int64"}
-| .definitions["delegate_observations.DelegateObservationDoc"].properties.sequence = {type: "integer", format: "int64"}
+| .definitions["vaa.VaaDoc"].properties.sequence = {type: "integer", format: "uint64"}
+| .definitions["observations.ObservationDoc"].properties.sequence = {type: "integer", format: "uint64"}
+| .definitions["delegate_observations.DelegateObservationDoc"].properties.sequence = {type: "integer", format: "uint64"}
 
 # 8. /api/v1/vaas/{chain_id}/{emitter}/{seq} returns {"data": VaaDoc}, not an
 #    array envelope.
@@ -162,8 +162,8 @@ def is_rfc3339_field($def; $name):
 #     typed as strings; the server sends JSON numbers.
 #     Evidence: GET /api/v1/governor/enqueued_vaas/?pageSize=2 and
 #     GET /api/v1/governor/enqueued_vaas/1?pageSize=2 on 2026-09-29.
-| .definitions["governor.EnqueuedVaa"].properties.sequence = {type: "integer", format: "int64"}
-| .definitions["governor.EnqueuedVaaDetail"].properties.sequence = {type: "integer", format: "int64"}
+| .definitions["governor.EnqueuedVaa"].properties.sequence = {type: "integer", format: "uint64"}
+| .definitions["governor.EnqueuedVaaDetail"].properties.sequence = {type: "integer", format: "uint64"}
 
 # 32. governor.GovConfigfTokens.price is a JSON number; without format:double
 #     oapi-codegen emits float32 and live prices such as 0.01231905 do not
@@ -208,3 +208,21 @@ def is_rfc3339_field($def; $name):
 #     returns *ObservationDoc; the controller JSON-encodes that single value.
 | .paths["/api/v1/observations/{chain}/{emitter}/{sequence}/{signer}/{hash}"].get.responses["200"].schema =
     {"$ref": "#/definitions/observations.ObservationDoc"}
+
+# 42. Sequences are uint64 and the spec gives integers no format, so the
+#     generated client takes and decodes them as int/int64. Governance
+#     sequences are random uint64, so many exceed 2^63-1: the path rejects
+#     them and a JSON number such as 18220114619187442754 does not decode.
+#     Every integer `sequence` property and every `seq`/`sequence` path
+#     parameter is uint64 (rules 7 and 31 already say so for theirs).
+#     Evidence: GET /api/v1/vaas/1/0000000000000000000000000000000000000000000000000000000000000004/18220114619187442754
+#     and /api/v1/observations/… with the same id answer 200 with
+#     "sequence":18220114619187442754 on 2026-10-07.
+| .definitions |= map_values(
+    if .properties.sequence.type? == "integer" then .properties.sequence.format = "uint64" else . end
+  )
+| .paths |= map_values(map_values(
+    if (type == "object") and has("parameters") then .parameters |= map(
+      if .in == "path" and (.name == "seq" or .name == "sequence") then .format = "uint64" else . end
+    ) else . end
+  ))

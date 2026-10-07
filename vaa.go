@@ -76,15 +76,11 @@ type VAAListOptions struct {
 
 // GetVAA returns the VAA identified by id.
 func (c *Client) GetVAA(ctx context.Context, id VAAID, opts VAAGetOptions) (VAA, error) {
-	seq, err := pathSequence(id.Sequence)
-	if err != nil {
-		return VAA{}, err
-	}
 	var params *api.FindVaaByIdParams
 	if opts.ParsedPayload {
 		params = &api.FindVaaByIdParams{ParsedPayload: &opts.ParsedPayload}
 	}
-	rsp, err := c.api.FindVaaByIdWithResponse(ctx, pathChain(id.Chain), string(id.Emitter), seq, params)
+	rsp, err := c.api.FindVaaByIdWithResponse(ctx, pathChain(id.Chain), string(id.Emitter), id.Sequence, params)
 	if err != nil {
 		return VAA{}, callErr(opGetVAA, err)
 	}
@@ -99,11 +95,7 @@ func (c *Client) GetVAA(ctx context.Context, id VAAID, opts VAAGetOptions) (VAA,
 
 // GetDuplicatedVAAs returns duplicate VAA documents stored for id.
 func (c *Client) GetDuplicatedVAAs(ctx context.Context, id VAAID) ([]VAA, error) {
-	seq, err := pathSequence(id.Sequence)
-	if err != nil {
-		return nil, err
-	}
-	rsp, err := c.api.FindDuplicatedVaaByIdWithResponse(ctx, pathChain(id.Chain), string(id.Emitter), seq)
+	rsp, err := c.api.FindDuplicatedVaaByIdWithResponse(ctx, pathChain(id.Chain), string(id.Emitter), id.Sequence)
 	if err != nil {
 		return nil, callErr(opGetDuplicatedVAAs, err)
 	}
@@ -239,7 +231,7 @@ func vaasFromDuplicateAPI(docs []api.VaaDuplicateVaaDoc) ([]VAA, error) {
 
 // vaaFromAPI maps [api.VaaVaaDoc] onto [VAA].
 func vaaFromAPI(doc api.VaaVaaDoc) (VAA, error) {
-	seq := uint64FromInt64(deref(doc.Sequence))
+	seq := deref(doc.Sequence)
 	id, err := vaaIDFromDoc(deref(doc.Id), deref(doc.EmitterChain), deref(doc.EmitterAddr), seq)
 	if err != nil {
 		return VAA{}, err
@@ -376,14 +368,6 @@ func pathChain(id ChainID) int {
 	return int(id)
 }
 
-// pathSequence converts a sequence number into the integer path parameter the generated client uses.
-func pathSequence(seq uint64) (int, error) {
-	if seq > uint64(math.MaxInt) {
-		return 0, fmt.Errorf("%ssequence %d: exceeds path integer range", errPrefix, seq)
-	}
-	return int(seq), nil
-}
-
 // chainFromAPI converts a generated chain id.
 func chainFromAPI(id api.VaaChainID) ChainID {
 	if id < 0 || id > api.VaaChainID(math.MaxUint16) {
@@ -412,14 +396,6 @@ func uint8FromInt(n int) uint8 {
 		return math.MaxUint8
 	}
 	return uint8(n)
-}
-
-// uint64FromInt64 converts n to uint64, treating negatives as zero.
-func uint64FromInt64(n int64) uint64 {
-	if n < 0 {
-		return 0
-	}
-	return uint64(n)
 }
 
 // uint64FromDec parses a decimal string as uint64. Invalid or empty input is zero.
