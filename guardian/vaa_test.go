@@ -56,3 +56,25 @@ func sampleVAAID() wormholescan.VAAID {
 		Sequence: 755119,
 	}
 }
+
+// TestGetSignedVAASequenceAboveMaxInt64 sends a sequence above 2^63-1 as
+// its decimal value; the fixture is the live response for it.
+func TestGetSignedVAASequenceAboveMaxInt64(t *testing.T) {
+	t.Parallel()
+
+	id := wormholescan.VAAID{
+		Chain:    wormholescan.ChainIDSolana,
+		Emitter:  "0000000000000000000000000000000000000000000000000000000000000004",
+		Sequence: 18220114619187442754,
+	}
+	var path string
+	c := newClient(t, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path = r.URL.Path
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write(loadFixture(t, "signed_vaa_governance.json"))
+	}))
+	got, err := c.GetSignedVAA(t.Context(), id)
+	require.NoError(t, err)
+	assert.Equal(t, "/v1/signed_vaa/1/"+string(id.Emitter)+"/18220114619187442754", path)
+	assert.NotEmpty(t, got)
+}

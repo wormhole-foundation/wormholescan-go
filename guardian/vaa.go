@@ -56,7 +56,6 @@ func (c *Client) GetSignedBatchVAA(ctx context.Context, id wormholescan.VAAID) (
 }
 
 // vaaPathParams converts a [wormholescan.VAAID] into generated path parameters.
-func vaaPathParams(id wormholescan.VAAID) (int, string, int) {
-	//nolint:gosec // path params are chain uint16 and sequence that fit int
-	return int(id.Chain), string(id.Emitter), int(id.Sequence)
+func vaaPathParams(id wormholescan.VAAID) (int, string, uint64) {
+	return int(id.Chain), string(id.Emitter), id.Sequence
 }

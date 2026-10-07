@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"iter"
-	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -29,11 +28,7 @@ const (
 
 // GetOperation fetches one operation by VAA id (get-operation-by-id).
 func (c *Client) GetOperation(ctx context.Context, id VAAID) (Operation, error) {
-	chain, emitter, seq, err := vaaIDPath(id)
-	if err != nil {
-		return Operation{}, err
-	}
-	rsp, err := c.api.GetOperationByIdWithResponse(ctx, chain, emitter, seq)
+	rsp, err := c.api.GetOperationByIdWithResponse(ctx, pathChain(id.Chain), string(id.Emitter), id.Sequence)
 	if err != nil {
 		return Operation{}, wrapCall(opGetOperationByID, err)
 	}
@@ -99,11 +94,7 @@ func (c *Client) SearchOperationsByTxHashes(ctx context.Context, hashes []TxHash
 
 // GetRelay fetches Wormhole Relayer delivery info for a VAA (find-relay-by-vaa-id).
 func (c *Client) GetRelay(ctx context.Context, id VAAID) (Relay, error) {
-	chain, emitter, seq, err := vaaIDPath(id)
-	if err != nil {
-		return Relay{}, err
-	}
-	rsp, err := c.api.FindRelayByVaaIdWithResponse(ctx, chain, emitter, seq)
+	rsp, err := c.api.FindRelayByVaaIdWithResponse(ctx, pathChain(id.Chain), string(id.Emitter), id.Sequence)
 	if err != nil {
 		return Relay{}, wrapCall(opFindRelay, err)
 	}
@@ -119,11 +110,7 @@ func (c *Client) GetRelay(ctx context.Context, id VAAID) (Relay, error) {
 // GetGlobalTransaction fetches the origin and destination transactions for a VAA
 // (find-global-transaction-by-id). Destination is zero when the VAA is unredeemed.
 func (c *Client) GetGlobalTransaction(ctx context.Context, id VAAID) (GlobalTransaction, error) {
-	chain, emitter, seq, err := vaaIDPath(id)
-	if err != nil {
-		return GlobalTransaction{}, err
-	}
-	rsp, err := c.api.FindGlobalTransactionByIdWithResponse(ctx, chain, emitter, seq)
+	rsp, err := c.api.FindGlobalTransactionByIdWithResponse(ctx, pathChain(id.Chain), string(id.Emitter), id.Sequence)
 	if err != nil {
 		return GlobalTransaction{}, wrapCall(opFindGlobalTx, err)
 	}
@@ -196,23 +183,6 @@ func joinChainIDs(ids []ChainID) string {
 		parts[i] = strconv.FormatUint(uint64(id), 10)
 	}
 	return strings.Join(parts, chainListSep)
-}
-
-// vaaIDPath converts a VAA id into generated path parameters.
-func vaaIDPath(id VAAID) (int, string, int, error) {
-	seq, err := sequenceParam(id.Sequence)
-	if err != nil {
-		return 0, "", 0, err
-	}
-	return int(id.Chain), string(id.Emitter), seq, nil
-}
-
-// sequenceParam converts a VAA sequence into a generated path parameter.
-func sequenceParam(seq uint64) (int, error) {
-	if seq > uint64(math.MaxInt) {
-		return 0, fmt.Errorf("%sVAA sequence %d exceeds path parameter range", errPrefix, seq)
-	}
-	return int(seq), nil
 }
 
 // wrapCall prefixes a generated-client error with the operation id.

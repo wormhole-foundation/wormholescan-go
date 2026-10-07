@@ -219,7 +219,7 @@ type DelegateObservationsDelegateObservationDoc struct {
 	Nonce                 *int        `json:"nonce,omitempty"`
 	Payload               *[]byte     `json:"payload,omitempty"`
 	SentTimestamp         *string     `json:"sentTimestamp,omitempty"`
-	Sequence              *int64      `json:"sequence,omitempty"`
+	Sequence              *uint64     `json:"sequence,omitempty"`
 	Signature             *[]byte     `json:"signature,omitempty"`
 	Timestamp             *time.Time  `json:"timestamp,omitempty"`
 	TxHash                *[]byte     `json:"txHash,omitempty"`
@@ -274,7 +274,7 @@ type GovernorEnqueuedVaa struct {
 	ChainId        *VaaChainID `json:"chainId,omitempty"`
 	EmitterAddress *string     `json:"emitterAddress,omitempty"`
 	NotionalValue  *int        `json:"notionalValue,omitempty"`
-	Sequence       *int64      `json:"sequence,omitempty"`
+	Sequence       *uint64     `json:"sequence,omitempty"`
 	TxHash         *string     `json:"txHash,omitempty"`
 }
 
@@ -284,7 +284,7 @@ type GovernorEnqueuedVaaDetail struct {
 	EmitterAddress *string     `json:"emitterAddress,omitempty"`
 	NotionalValue  *int        `json:"notionalValue,omitempty"`
 	ReleaseTime    *int        `json:"releaseTime,omitempty"`
-	Sequence       *int64      `json:"sequence,omitempty"`
+	Sequence       *uint64     `json:"sequence,omitempty"`
 	TxHash         *string     `json:"txHash,omitempty"`
 }
 
@@ -294,7 +294,7 @@ type GovernorEnqueuedVaaItemResponse struct {
 	EmitterChain   *VaaChainID `json:"emitterChain,omitempty"`
 	NotionalValue  *string     `json:"notionalValue,omitempty"`
 	ReleaseTime    *int        `json:"releaseTime,omitempty"`
-	Sequence       *int        `json:"sequence,omitempty"`
+	Sequence       *uint64     `json:"sequence,omitempty"`
 	TxHash         *string     `json:"txHash,omitempty"`
 }
 
@@ -499,7 +499,7 @@ type ObservationsObservationDoc struct {
 	Hash         *[]byte     `json:"hash,omitempty"`
 	Id           *string     `json:"id,omitempty"`
 	IndexedAt    *time.Time  `json:"indexedAt,omitempty"`
-	Sequence     *int64      `json:"sequence,omitempty"`
+	Sequence     *uint64     `json:"sequence,omitempty"`
 	Signature    *[]byte     `json:"signature,omitempty"`
 	TxHash       *[]byte     `json:"txHash,omitempty"`
 	UpdatedAt    *time.Time  `json:"updatedAt,omitempty"`
@@ -1220,7 +1220,7 @@ type VaaVaaDoc struct {
 
 	// Payload Payload is an extension field - it is not present in the guardian API.
 	Payload   *map[string]interface{} `json:"payload,omitempty"`
-	Sequence  *int64                  `json:"sequence,omitempty"`
+	Sequence  *uint64                 `json:"sequence,omitempty"`
 	Timestamp *time.Time              `json:"timestamp,omitempty"`
 
 	// TxHash TxHash is an extension field - it is not present in the guardian API.
@@ -1886,7 +1886,7 @@ type ClientInterface interface {
 	ApplicationActivity(ctx context.Context, params *ApplicationActivityParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindGlobalTransactionById request
-	FindGlobalTransactionById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindGlobalTransactionById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GovernorConfig request
 	GovernorConfig(ctx context.Context, params *GovernorConfigParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1967,10 +1967,10 @@ type ClientInterface interface {
 	FindDelegateObservationsByEmitter(ctx context.Context, chainId int, emitterAddress string, params *FindDelegateObservationsByEmitterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindDelegateObservationsBySequence request
-	FindDelegateObservationsBySequence(ctx context.Context, chainId int, emitterAddress string, sequence int, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindDelegateObservationsBySequence(ctx context.Context, chainId int, emitterAddress string, sequence uint64, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindDelegateObservationsByGuardian request
-	FindDelegateObservationsByGuardian(ctx context.Context, chainId int, emitterAddress string, sequence int, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindDelegateObservationsByGuardian(ctx context.Context, chainId int, emitterAddress string, sequence uint64, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindObservationsByChain request
 	FindObservationsByChain(ctx context.Context, chain int, params *FindObservationsByChainParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1979,10 +1979,10 @@ type ClientInterface interface {
 	FindObservationsByEmitter(ctx context.Context, chain int, emitter string, params *FindObservationsByEmitterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindObservationsBySequence request
-	FindObservationsBySequence(ctx context.Context, chain int, emitter string, sequence int, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindObservationsBySequence(ctx context.Context, chain int, emitter string, sequence uint64, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindObservationsById request
-	FindObservationsById(ctx context.Context, chain int, emitter string, sequence int, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindObservationsById(ctx context.Context, chain int, emitter string, sequence uint64, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOperations request
 	GetOperations(ctx context.Context, params *GetOperationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -1993,7 +1993,7 @@ type ClientInterface interface {
 	SearchOperations(ctx context.Context, body SearchOperationsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetOperationById request
-	GetOperationById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetOperationById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetTopProtocolsStats request
 	GetTopProtocolsStats(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2008,7 +2008,7 @@ type ClientInterface interface {
 	ReadyCheck(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindRelayByVaaId request
-	FindRelayByVaaId(ctx context.Context, chain int, emitter string, sequence int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindRelayByVaaId(ctx context.Context, chain int, emitter string, sequence uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetScorecards request
 	GetScorecards(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2041,7 +2041,7 @@ type ClientInterface interface {
 	ListTransactions(ctx context.Context, params *ListTransactionsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetTransactionById request
-	GetTransactionById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetTransactionById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindAllVaas request
 	FindAllVaas(ctx context.Context, params *FindAllVaasParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2059,10 +2059,10 @@ type ClientInterface interface {
 	FindVaasByEmitter(ctx context.Context, chainId int, emitter string, params *FindVaasByEmitterParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindVaaById request
-	FindVaaById(ctx context.Context, chainId int, emitter string, seq int, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindVaaById(ctx context.Context, chainId int, emitter string, seq uint64, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// FindDuplicatedVaaById request
-	FindDuplicatedVaaById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	FindDuplicatedVaaById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetVersion request
 	GetVersion(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2086,7 +2086,7 @@ type ClientInterface interface {
 	GuardiansEnqueuedVaas(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GuardiansIsVaaEnqueued request
-	GuardiansIsVaaEnqueued(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GuardiansIsVaaEnqueued(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GuardiansTokenList request
 	GuardiansTokenList(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -2098,10 +2098,10 @@ type ClientInterface interface {
 	GuardiansHearbeats(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GuardiansFindSignedBatchVaa request
-	GuardiansFindSignedBatchVaa(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GuardiansFindSignedBatchVaa(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GuardiansFindSignedVaa request
-	GuardiansFindSignedVaa(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GuardiansFindSignedVaa(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error)
 }
 
 func (c *Client) FindAddressById(ctx context.Context, address string, params *FindAddressByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -2128,7 +2128,7 @@ func (c *Client) ApplicationActivity(ctx context.Context, params *ApplicationAct
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindGlobalTransactionById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindGlobalTransactionById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindGlobalTransactionByIdRequest(c.Server, chainId, emitter, seq)
 	if err != nil {
 		return nil, err
@@ -2452,7 +2452,7 @@ func (c *Client) FindDelegateObservationsByEmitter(ctx context.Context, chainId 
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindDelegateObservationsBySequence(ctx context.Context, chainId int, emitterAddress string, sequence int, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindDelegateObservationsBySequence(ctx context.Context, chainId int, emitterAddress string, sequence uint64, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindDelegateObservationsBySequenceRequest(c.Server, chainId, emitterAddress, sequence, params)
 	if err != nil {
 		return nil, err
@@ -2464,7 +2464,7 @@ func (c *Client) FindDelegateObservationsBySequence(ctx context.Context, chainId
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindDelegateObservationsByGuardian(ctx context.Context, chainId int, emitterAddress string, sequence int, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindDelegateObservationsByGuardian(ctx context.Context, chainId int, emitterAddress string, sequence uint64, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindDelegateObservationsByGuardianRequest(c.Server, chainId, emitterAddress, sequence, guardianAddress, params)
 	if err != nil {
 		return nil, err
@@ -2500,7 +2500,7 @@ func (c *Client) FindObservationsByEmitter(ctx context.Context, chain int, emitt
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindObservationsBySequence(ctx context.Context, chain int, emitter string, sequence int, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindObservationsBySequence(ctx context.Context, chain int, emitter string, sequence uint64, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindObservationsBySequenceRequest(c.Server, chain, emitter, sequence, params)
 	if err != nil {
 		return nil, err
@@ -2512,7 +2512,7 @@ func (c *Client) FindObservationsBySequence(ctx context.Context, chain int, emit
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindObservationsById(ctx context.Context, chain int, emitter string, sequence int, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindObservationsById(ctx context.Context, chain int, emitter string, sequence uint64, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindObservationsByIdRequest(c.Server, chain, emitter, sequence, signer, hash, params)
 	if err != nil {
 		return nil, err
@@ -2560,7 +2560,7 @@ func (c *Client) SearchOperations(ctx context.Context, body SearchOperationsJSON
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetOperationById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetOperationById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOperationByIdRequest(c.Server, chainId, emitter, seq)
 	if err != nil {
 		return nil, err
@@ -2620,7 +2620,7 @@ func (c *Client) ReadyCheck(ctx context.Context, reqEditors ...RequestEditorFn) 
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindRelayByVaaId(ctx context.Context, chain int, emitter string, sequence int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindRelayByVaaId(ctx context.Context, chain int, emitter string, sequence uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindRelayByVaaIdRequest(c.Server, chain, emitter, sequence)
 	if err != nil {
 		return nil, err
@@ -2752,7 +2752,7 @@ func (c *Client) ListTransactions(ctx context.Context, params *ListTransactionsP
 	return c.Client.Do(req)
 }
 
-func (c *Client) GetTransactionById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GetTransactionById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetTransactionByIdRequest(c.Server, chainId, emitter, seq)
 	if err != nil {
 		return nil, err
@@ -2824,7 +2824,7 @@ func (c *Client) FindVaasByEmitter(ctx context.Context, chainId int, emitter str
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindVaaById(ctx context.Context, chainId int, emitter string, seq int, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindVaaById(ctx context.Context, chainId int, emitter string, seq uint64, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindVaaByIdRequest(c.Server, chainId, emitter, seq, params)
 	if err != nil {
 		return nil, err
@@ -2836,7 +2836,7 @@ func (c *Client) FindVaaById(ctx context.Context, chainId int, emitter string, s
 	return c.Client.Do(req)
 }
 
-func (c *Client) FindDuplicatedVaaById(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) FindDuplicatedVaaById(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFindDuplicatedVaaByIdRequest(c.Server, chainId, emitter, seq)
 	if err != nil {
 		return nil, err
@@ -2932,7 +2932,7 @@ func (c *Client) GuardiansEnqueuedVaas(ctx context.Context, reqEditors ...Reques
 	return c.Client.Do(req)
 }
 
-func (c *Client) GuardiansIsVaaEnqueued(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GuardiansIsVaaEnqueued(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGuardiansIsVaaEnqueuedRequest(c.Server, chainId, emitter, seq)
 	if err != nil {
 		return nil, err
@@ -2980,7 +2980,7 @@ func (c *Client) GuardiansHearbeats(ctx context.Context, reqEditors ...RequestEd
 	return c.Client.Do(req)
 }
 
-func (c *Client) GuardiansFindSignedBatchVaa(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GuardiansFindSignedBatchVaa(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGuardiansFindSignedBatchVaaRequest(c.Server, chainId, emitter, seq)
 	if err != nil {
 		return nil, err
@@ -2992,7 +2992,7 @@ func (c *Client) GuardiansFindSignedBatchVaa(ctx context.Context, chainId int, e
 	return c.Client.Do(req)
 }
 
-func (c *Client) GuardiansFindSignedVaa(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*http.Response, error) {
+func (c *Client) GuardiansFindSignedVaa(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGuardiansFindSignedVaaRequest(c.Server, chainId, emitter, seq)
 	if err != nil {
 		return nil, err
@@ -3162,7 +3162,7 @@ func NewApplicationActivityRequest(server string, params *ApplicationActivityPar
 }
 
 // NewFindGlobalTransactionByIdRequest generates requests for FindGlobalTransactionById
-func NewFindGlobalTransactionByIdRequest(server string, chainId int, emitter string, seq int) (*http.Request, error) {
+func NewFindGlobalTransactionByIdRequest(server string, chainId int, emitter string, seq uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -4856,7 +4856,7 @@ func NewFindDelegateObservationsByEmitterRequest(server string, chainId int, emi
 }
 
 // NewFindDelegateObservationsBySequenceRequest generates requests for FindDelegateObservationsBySequence
-func NewFindDelegateObservationsBySequenceRequest(server string, chainId int, emitterAddress string, sequence int, params *FindDelegateObservationsBySequenceParams) (*http.Request, error) {
+func NewFindDelegateObservationsBySequenceRequest(server string, chainId int, emitterAddress string, sequence uint64, params *FindDelegateObservationsBySequenceParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -4958,7 +4958,7 @@ func NewFindDelegateObservationsBySequenceRequest(server string, chainId int, em
 }
 
 // NewFindDelegateObservationsByGuardianRequest generates requests for FindDelegateObservationsByGuardian
-func NewFindDelegateObservationsByGuardianRequest(server string, chainId int, emitterAddress string, sequence int, guardianAddress string, params *FindDelegateObservationsByGuardianParams) (*http.Request, error) {
+func NewFindDelegateObservationsByGuardianRequest(server string, chainId int, emitterAddress string, sequence uint64, guardianAddress string, params *FindDelegateObservationsByGuardianParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -5250,7 +5250,7 @@ func NewFindObservationsByEmitterRequest(server string, chain int, emitter strin
 }
 
 // NewFindObservationsBySequenceRequest generates requests for FindObservationsBySequence
-func NewFindObservationsBySequenceRequest(server string, chain int, emitter string, sequence int, params *FindObservationsBySequenceParams) (*http.Request, error) {
+func NewFindObservationsBySequenceRequest(server string, chain int, emitter string, sequence uint64, params *FindObservationsBySequenceParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -5352,7 +5352,7 @@ func NewFindObservationsBySequenceRequest(server string, chain int, emitter stri
 }
 
 // NewFindObservationsByIdRequest generates requests for FindObservationsById
-func NewFindObservationsByIdRequest(server string, chain int, emitter string, sequence int, signer string, hash string, params *FindObservationsByIdParams) (*http.Request, error) {
+func NewFindObservationsByIdRequest(server string, chain int, emitter string, sequence uint64, signer string, hash string, params *FindObservationsByIdParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -5749,7 +5749,7 @@ func NewSearchOperationsRequestWithBody(server string, contentType string, body 
 }
 
 // NewGetOperationByIdRequest generates requests for GetOperationById
-func NewGetOperationByIdRequest(server string, chainId int, emitter string, seq int) (*http.Request, error) {
+func NewGetOperationByIdRequest(server string, chainId int, emitter string, seq uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -5979,7 +5979,7 @@ func NewReadyCheckRequest(server string) (*http.Request, error) {
 }
 
 // NewFindRelayByVaaIdRequest generates requests for FindRelayByVaaId
-func NewFindRelayByVaaIdRequest(server string, chain int, emitter string, sequence int) (*http.Request, error) {
+func NewFindRelayByVaaIdRequest(server string, chain int, emitter string, sequence uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -6461,7 +6461,7 @@ func NewListTransactionsRequest(server string, params *ListTransactionsParams) (
 }
 
 // NewGetTransactionByIdRequest generates requests for GetTransactionById
-func NewGetTransactionByIdRequest(server string, chainId int, emitter string, seq int) (*http.Request, error) {
+func NewGetTransactionByIdRequest(server string, chainId int, emitter string, seq uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -6971,7 +6971,7 @@ func NewFindVaasByEmitterRequest(server string, chainId int, emitter string, par
 }
 
 // NewFindVaaByIdRequest generates requests for FindVaaById
-func NewFindVaaByIdRequest(server string, chainId int, emitter string, seq int, params *FindVaaByIdParams) (*http.Request, error) {
+func NewFindVaaByIdRequest(server string, chainId int, emitter string, seq uint64, params *FindVaaByIdParams) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7041,7 +7041,7 @@ func NewFindVaaByIdRequest(server string, chainId int, emitter string, seq int, 
 }
 
 // NewFindDuplicatedVaaByIdRequest generates requests for FindDuplicatedVaaById
-func NewFindDuplicatedVaaByIdRequest(server string, chainId int, emitter string, seq int) (*http.Request, error) {
+func NewFindDuplicatedVaaByIdRequest(server string, chainId int, emitter string, seq uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7422,7 +7422,7 @@ func NewGuardiansEnqueuedVaasRequest(server string) (*http.Request, error) {
 }
 
 // NewGuardiansIsVaaEnqueuedRequest generates requests for GuardiansIsVaaEnqueued
-func NewGuardiansIsVaaEnqueuedRequest(server string, chainId int, emitter string, seq int) (*http.Request, error) {
+func NewGuardiansIsVaaEnqueuedRequest(server string, chainId int, emitter string, seq uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7551,7 +7551,7 @@ func NewGuardiansHearbeatsRequest(server string) (*http.Request, error) {
 }
 
 // NewGuardiansFindSignedBatchVaaRequest generates requests for GuardiansFindSignedBatchVaa
-func NewGuardiansFindSignedBatchVaaRequest(server string, chainId int, emitter string, seq int) (*http.Request, error) {
+func NewGuardiansFindSignedBatchVaaRequest(server string, chainId int, emitter string, seq uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7599,7 +7599,7 @@ func NewGuardiansFindSignedBatchVaaRequest(server string, chainId int, emitter s
 }
 
 // NewGuardiansFindSignedVaaRequest generates requests for GuardiansFindSignedVaa
-func NewGuardiansFindSignedVaaRequest(server string, chainId int, emitter string, seq int) (*http.Request, error) {
+func NewGuardiansFindSignedVaaRequest(server string, chainId int, emitter string, seq uint64) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
@@ -7696,7 +7696,7 @@ type ClientWithResponsesInterface interface {
 	ApplicationActivityWithResponse(ctx context.Context, params *ApplicationActivityParams, reqEditors ...RequestEditorFn) (*ApplicationActivityResponse, error)
 
 	// FindGlobalTransactionByIdWithResponse request
-	FindGlobalTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*FindGlobalTransactionByIdResponse, error)
+	FindGlobalTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*FindGlobalTransactionByIdResponse, error)
 
 	// GovernorConfigWithResponse request
 	GovernorConfigWithResponse(ctx context.Context, params *GovernorConfigParams, reqEditors ...RequestEditorFn) (*GovernorConfigResponse, error)
@@ -7777,10 +7777,10 @@ type ClientWithResponsesInterface interface {
 	FindDelegateObservationsByEmitterWithResponse(ctx context.Context, chainId int, emitterAddress string, params *FindDelegateObservationsByEmitterParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsByEmitterResponse, error)
 
 	// FindDelegateObservationsBySequenceWithResponse request
-	FindDelegateObservationsBySequenceWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence int, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsBySequenceResponse, error)
+	FindDelegateObservationsBySequenceWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence uint64, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsBySequenceResponse, error)
 
 	// FindDelegateObservationsByGuardianWithResponse request
-	FindDelegateObservationsByGuardianWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence int, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsByGuardianResponse, error)
+	FindDelegateObservationsByGuardianWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence uint64, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsByGuardianResponse, error)
 
 	// FindObservationsByChainWithResponse request
 	FindObservationsByChainWithResponse(ctx context.Context, chain int, params *FindObservationsByChainParams, reqEditors ...RequestEditorFn) (*FindObservationsByChainResponse, error)
@@ -7789,10 +7789,10 @@ type ClientWithResponsesInterface interface {
 	FindObservationsByEmitterWithResponse(ctx context.Context, chain int, emitter string, params *FindObservationsByEmitterParams, reqEditors ...RequestEditorFn) (*FindObservationsByEmitterResponse, error)
 
 	// FindObservationsBySequenceWithResponse request
-	FindObservationsBySequenceWithResponse(ctx context.Context, chain int, emitter string, sequence int, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindObservationsBySequenceResponse, error)
+	FindObservationsBySequenceWithResponse(ctx context.Context, chain int, emitter string, sequence uint64, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindObservationsBySequenceResponse, error)
 
 	// FindObservationsByIdWithResponse request
-	FindObservationsByIdWithResponse(ctx context.Context, chain int, emitter string, sequence int, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*FindObservationsByIdResponse, error)
+	FindObservationsByIdWithResponse(ctx context.Context, chain int, emitter string, sequence uint64, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*FindObservationsByIdResponse, error)
 
 	// GetOperationsWithResponse request
 	GetOperationsWithResponse(ctx context.Context, params *GetOperationsParams, reqEditors ...RequestEditorFn) (*GetOperationsResponse, error)
@@ -7803,7 +7803,7 @@ type ClientWithResponsesInterface interface {
 	SearchOperationsWithResponse(ctx context.Context, body SearchOperationsJSONRequestBody, reqEditors ...RequestEditorFn) (*SearchOperationsResponse, error)
 
 	// GetOperationByIdWithResponse request
-	GetOperationByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GetOperationByIdResponse, error)
+	GetOperationByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GetOperationByIdResponse, error)
 
 	// GetTopProtocolsStatsWithResponse request
 	GetTopProtocolsStatsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetTopProtocolsStatsResponse, error)
@@ -7818,7 +7818,7 @@ type ClientWithResponsesInterface interface {
 	ReadyCheckWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*ReadyCheckResponse, error)
 
 	// FindRelayByVaaIdWithResponse request
-	FindRelayByVaaIdWithResponse(ctx context.Context, chain int, emitter string, sequence int, reqEditors ...RequestEditorFn) (*FindRelayByVaaIdResponse, error)
+	FindRelayByVaaIdWithResponse(ctx context.Context, chain int, emitter string, sequence uint64, reqEditors ...RequestEditorFn) (*FindRelayByVaaIdResponse, error)
 
 	// GetScorecardsWithResponse request
 	GetScorecardsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetScorecardsResponse, error)
@@ -7851,7 +7851,7 @@ type ClientWithResponsesInterface interface {
 	ListTransactionsWithResponse(ctx context.Context, params *ListTransactionsParams, reqEditors ...RequestEditorFn) (*ListTransactionsResponse, error)
 
 	// GetTransactionByIdWithResponse request
-	GetTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GetTransactionByIdResponse, error)
+	GetTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GetTransactionByIdResponse, error)
 
 	// FindAllVaasWithResponse request
 	FindAllVaasWithResponse(ctx context.Context, params *FindAllVaasParams, reqEditors ...RequestEditorFn) (*FindAllVaasResponse, error)
@@ -7869,10 +7869,10 @@ type ClientWithResponsesInterface interface {
 	FindVaasByEmitterWithResponse(ctx context.Context, chainId int, emitter string, params *FindVaasByEmitterParams, reqEditors ...RequestEditorFn) (*FindVaasByEmitterResponse, error)
 
 	// FindVaaByIdWithResponse request
-	FindVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*FindVaaByIdResponse, error)
+	FindVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*FindVaaByIdResponse, error)
 
 	// FindDuplicatedVaaByIdWithResponse request
-	FindDuplicatedVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*FindDuplicatedVaaByIdResponse, error)
+	FindDuplicatedVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*FindDuplicatedVaaByIdResponse, error)
 
 	// GetVersionWithResponse request
 	GetVersionWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GetVersionResponse, error)
@@ -7896,7 +7896,7 @@ type ClientWithResponsesInterface interface {
 	GuardiansEnqueuedVaasWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GuardiansEnqueuedVaasResponse, error)
 
 	// GuardiansIsVaaEnqueuedWithResponse request
-	GuardiansIsVaaEnqueuedWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GuardiansIsVaaEnqueuedResponse, error)
+	GuardiansIsVaaEnqueuedWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GuardiansIsVaaEnqueuedResponse, error)
 
 	// GuardiansTokenListWithResponse request
 	GuardiansTokenListWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GuardiansTokenListResponse, error)
@@ -7908,10 +7908,10 @@ type ClientWithResponsesInterface interface {
 	GuardiansHearbeatsWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*GuardiansHearbeatsResponse, error)
 
 	// GuardiansFindSignedBatchVaaWithResponse request
-	GuardiansFindSignedBatchVaaWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GuardiansFindSignedBatchVaaResponse, error)
+	GuardiansFindSignedBatchVaaWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GuardiansFindSignedBatchVaaResponse, error)
 
 	// GuardiansFindSignedVaaWithResponse request
-	GuardiansFindSignedVaaWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GuardiansFindSignedVaaResponse, error)
+	GuardiansFindSignedVaaWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GuardiansFindSignedVaaResponse, error)
 }
 
 type FindAddressByIdResponse struct {
@@ -9705,7 +9705,7 @@ func (c *ClientWithResponses) ApplicationActivityWithResponse(ctx context.Contex
 }
 
 // FindGlobalTransactionByIdWithResponse request returning *FindGlobalTransactionByIdResponse
-func (c *ClientWithResponses) FindGlobalTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*FindGlobalTransactionByIdResponse, error) {
+func (c *ClientWithResponses) FindGlobalTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*FindGlobalTransactionByIdResponse, error) {
 	rsp, err := c.FindGlobalTransactionById(ctx, chainId, emitter, seq, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -9948,7 +9948,7 @@ func (c *ClientWithResponses) FindDelegateObservationsByEmitterWithResponse(ctx 
 }
 
 // FindDelegateObservationsBySequenceWithResponse request returning *FindDelegateObservationsBySequenceResponse
-func (c *ClientWithResponses) FindDelegateObservationsBySequenceWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence int, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsBySequenceResponse, error) {
+func (c *ClientWithResponses) FindDelegateObservationsBySequenceWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence uint64, params *FindDelegateObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsBySequenceResponse, error) {
 	rsp, err := c.FindDelegateObservationsBySequence(ctx, chainId, emitterAddress, sequence, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -9957,7 +9957,7 @@ func (c *ClientWithResponses) FindDelegateObservationsBySequenceWithResponse(ctx
 }
 
 // FindDelegateObservationsByGuardianWithResponse request returning *FindDelegateObservationsByGuardianResponse
-func (c *ClientWithResponses) FindDelegateObservationsByGuardianWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence int, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsByGuardianResponse, error) {
+func (c *ClientWithResponses) FindDelegateObservationsByGuardianWithResponse(ctx context.Context, chainId int, emitterAddress string, sequence uint64, guardianAddress string, params *FindDelegateObservationsByGuardianParams, reqEditors ...RequestEditorFn) (*FindDelegateObservationsByGuardianResponse, error) {
 	rsp, err := c.FindDelegateObservationsByGuardian(ctx, chainId, emitterAddress, sequence, guardianAddress, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -9984,7 +9984,7 @@ func (c *ClientWithResponses) FindObservationsByEmitterWithResponse(ctx context.
 }
 
 // FindObservationsBySequenceWithResponse request returning *FindObservationsBySequenceResponse
-func (c *ClientWithResponses) FindObservationsBySequenceWithResponse(ctx context.Context, chain int, emitter string, sequence int, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindObservationsBySequenceResponse, error) {
+func (c *ClientWithResponses) FindObservationsBySequenceWithResponse(ctx context.Context, chain int, emitter string, sequence uint64, params *FindObservationsBySequenceParams, reqEditors ...RequestEditorFn) (*FindObservationsBySequenceResponse, error) {
 	rsp, err := c.FindObservationsBySequence(ctx, chain, emitter, sequence, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -9993,7 +9993,7 @@ func (c *ClientWithResponses) FindObservationsBySequenceWithResponse(ctx context
 }
 
 // FindObservationsByIdWithResponse request returning *FindObservationsByIdResponse
-func (c *ClientWithResponses) FindObservationsByIdWithResponse(ctx context.Context, chain int, emitter string, sequence int, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*FindObservationsByIdResponse, error) {
+func (c *ClientWithResponses) FindObservationsByIdWithResponse(ctx context.Context, chain int, emitter string, sequence uint64, signer string, hash string, params *FindObservationsByIdParams, reqEditors ...RequestEditorFn) (*FindObservationsByIdResponse, error) {
 	rsp, err := c.FindObservationsById(ctx, chain, emitter, sequence, signer, hash, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10028,7 +10028,7 @@ func (c *ClientWithResponses) SearchOperationsWithResponse(ctx context.Context, 
 }
 
 // GetOperationByIdWithResponse request returning *GetOperationByIdResponse
-func (c *ClientWithResponses) GetOperationByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GetOperationByIdResponse, error) {
+func (c *ClientWithResponses) GetOperationByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GetOperationByIdResponse, error) {
 	rsp, err := c.GetOperationById(ctx, chainId, emitter, seq, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10073,7 +10073,7 @@ func (c *ClientWithResponses) ReadyCheckWithResponse(ctx context.Context, reqEdi
 }
 
 // FindRelayByVaaIdWithResponse request returning *FindRelayByVaaIdResponse
-func (c *ClientWithResponses) FindRelayByVaaIdWithResponse(ctx context.Context, chain int, emitter string, sequence int, reqEditors ...RequestEditorFn) (*FindRelayByVaaIdResponse, error) {
+func (c *ClientWithResponses) FindRelayByVaaIdWithResponse(ctx context.Context, chain int, emitter string, sequence uint64, reqEditors ...RequestEditorFn) (*FindRelayByVaaIdResponse, error) {
 	rsp, err := c.FindRelayByVaaId(ctx, chain, emitter, sequence, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10172,7 +10172,7 @@ func (c *ClientWithResponses) ListTransactionsWithResponse(ctx context.Context, 
 }
 
 // GetTransactionByIdWithResponse request returning *GetTransactionByIdResponse
-func (c *ClientWithResponses) GetTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GetTransactionByIdResponse, error) {
+func (c *ClientWithResponses) GetTransactionByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GetTransactionByIdResponse, error) {
 	rsp, err := c.GetTransactionById(ctx, chainId, emitter, seq, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10226,7 +10226,7 @@ func (c *ClientWithResponses) FindVaasByEmitterWithResponse(ctx context.Context,
 }
 
 // FindVaaByIdWithResponse request returning *FindVaaByIdResponse
-func (c *ClientWithResponses) FindVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*FindVaaByIdResponse, error) {
+func (c *ClientWithResponses) FindVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, params *FindVaaByIdParams, reqEditors ...RequestEditorFn) (*FindVaaByIdResponse, error) {
 	rsp, err := c.FindVaaById(ctx, chainId, emitter, seq, params, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10235,7 +10235,7 @@ func (c *ClientWithResponses) FindVaaByIdWithResponse(ctx context.Context, chain
 }
 
 // FindDuplicatedVaaByIdWithResponse request returning *FindDuplicatedVaaByIdResponse
-func (c *ClientWithResponses) FindDuplicatedVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*FindDuplicatedVaaByIdResponse, error) {
+func (c *ClientWithResponses) FindDuplicatedVaaByIdWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*FindDuplicatedVaaByIdResponse, error) {
 	rsp, err := c.FindDuplicatedVaaById(ctx, chainId, emitter, seq, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10307,7 +10307,7 @@ func (c *ClientWithResponses) GuardiansEnqueuedVaasWithResponse(ctx context.Cont
 }
 
 // GuardiansIsVaaEnqueuedWithResponse request returning *GuardiansIsVaaEnqueuedResponse
-func (c *ClientWithResponses) GuardiansIsVaaEnqueuedWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GuardiansIsVaaEnqueuedResponse, error) {
+func (c *ClientWithResponses) GuardiansIsVaaEnqueuedWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GuardiansIsVaaEnqueuedResponse, error) {
 	rsp, err := c.GuardiansIsVaaEnqueued(ctx, chainId, emitter, seq, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10343,7 +10343,7 @@ func (c *ClientWithResponses) GuardiansHearbeatsWithResponse(ctx context.Context
 }
 
 // GuardiansFindSignedBatchVaaWithResponse request returning *GuardiansFindSignedBatchVaaResponse
-func (c *ClientWithResponses) GuardiansFindSignedBatchVaaWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GuardiansFindSignedBatchVaaResponse, error) {
+func (c *ClientWithResponses) GuardiansFindSignedBatchVaaWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GuardiansFindSignedBatchVaaResponse, error) {
 	rsp, err := c.GuardiansFindSignedBatchVaa(ctx, chainId, emitter, seq, reqEditors...)
 	if err != nil {
 		return nil, err
@@ -10352,7 +10352,7 @@ func (c *ClientWithResponses) GuardiansFindSignedBatchVaaWithResponse(ctx contex
 }
 
 // GuardiansFindSignedVaaWithResponse request returning *GuardiansFindSignedVaaResponse
-func (c *ClientWithResponses) GuardiansFindSignedVaaWithResponse(ctx context.Context, chainId int, emitter string, seq int, reqEditors ...RequestEditorFn) (*GuardiansFindSignedVaaResponse, error) {
+func (c *ClientWithResponses) GuardiansFindSignedVaaWithResponse(ctx context.Context, chainId int, emitter string, seq uint64, reqEditors ...RequestEditorFn) (*GuardiansFindSignedVaaResponse, error) {
 	rsp, err := c.GuardiansFindSignedVaa(ctx, chainId, emitter, seq, reqEditors...)
 	if err != nil {
 		return nil, err
